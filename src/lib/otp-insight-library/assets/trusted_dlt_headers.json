@@ -1,0 +1,50 @@
+{
+  "dlt_headers": [
+    "VM-HDFCBK",
+    "VK-ICICIB",
+    "DM-SBIBNK",
+    "BP-PNBBK",
+    "AX-AXISBK",
+    "AD-AMAZON",
+    "JD-FLPKRT",
+    "QM-MYNTRA",
+    "BZ-BIGBZR",
+    "TD-ZOMATO",
+    "HP-SWIGGY",
+    "JM-JIO",
+    "VI-VODAFN",
+    "AR-AIRTEL"
+  ],
+  "whitelisted_domains": [
+    "amazon.in",
+    "flipkart.com",
+    "sbi.co.in",
+    "hdfcbank.com",
+    "icicibank.com",
+    "pnbindia.in",
+    "axisbank.com",
+    "myntra.com",
+    "bigbazaar.com",
+    "zomato.com",
+    "swiggy.com",
+    "jio.com",
+    "vodafoneidea.com",
+    "airtel.in",
+    "paytm.com",
+    "google.com",
+    "apple.com"
+  ],
+  "url_shorteners": [
+    "bit.ly",
+    "tinyurl.com",
+    "goo.gl",
+    "t.co",
+    "ow.ly",
+    "rebrand.ly",
+    "cutt.ly",
+    "is.gd",
+    "s.id",
+    "rb.gy"
+  ]
+}
+

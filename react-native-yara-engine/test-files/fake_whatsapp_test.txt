@@ -1,0 +1,5 @@
+com.whatsapp
+whatsapp_plus
+gbwhatsapp
+fake_whatsapp_application
+

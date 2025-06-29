@@ -1,0 +1,70 @@
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+/JavaScript 3 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [4 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/S /JavaScript
+/JS (app.alert("This is a test PDF with JavaScript");)
+>>
+endobj
+
+4 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/EmbeddedFile 5 0 R
+/Launch 6 0 R
+>>
+endobj
+
+5 0 obj
+<<
+/Type /EmbeddedFile
+/Length 100
+>>
+stream
+This is embedded file content that could be malicious.
+endstream
+endobj
+
+6 0 obj
+<<
+/Type /Action
+/S /Launch
+/F (malicious_executable.exe)
+>>
+endobj
+
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000074 00000 n 
+0000000120 00000 n 
+0000000213 00000 n 
+0000000320 00000 n 
+0000000450 00000 n 
+trailer
+<<
+/Size 7
+/Root 1 0 R
+>>
+startxref
+520
+%%EOF
+

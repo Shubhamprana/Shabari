@@ -1,0 +1,11 @@
+dex
+035
+com.android.vending.BILLING
+overlay_service
+accessibility_service
+BIND_ACCESSIBILITY_SERVICE
+sendTextMessage
+abortBroadcast
+RECEIVE_SMS
+android.permission.SEND_SMS
+

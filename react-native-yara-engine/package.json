@@ -1,0 +1,47 @@
+{
+  "name": "react-native-yara-engine",
+  "version": "1.0.0",
+  "description": "YARA malware detection engine for React Native",
+  "main": "index.js",
+  "scripts": {
+    "build": "react-native run-android",
+    "test": "jest",
+    "lint": "eslint .",
+    "prepare": "echo 'Skipping native build for now'"
+  },
+  "keywords": [
+    "react-native",
+    "yara",
+    "malware",
+    "security",
+    "android",
+    "detection"
+  ],
+  "author": "Shabari Security Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react-native": ">=0.60.0"
+  },
+  "devDependencies": {
+    "@types/react-native": "^0.72.0",
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shabari/react-native-yara-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shabari/react-native-yara-engine/issues"
+  },
+  "homepage": "https://github.com/shabari/react-native-yara-engine#readme",
+  "files": [
+    "android/",
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ]
+}
+

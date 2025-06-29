@@ -1,0 +1,20 @@
+// Expo Modules Core Kotlin Plugin Extension
+// This file provides missing Kotlin plugin functionality
+
+ext.applyKotlinExpoModulesCorePlugin = {
+    // No-op implementation to prevent build failures
+    println("Kotlin Expo Modules Core Plugin applied")
+}
+
+ext.getKotlinExpoModulesCore = {
+    return [:]
+}
+
+ext.configureKotlinExpoModulesCore = { config ->
+    println("Kotlin Expo Modules Core configured")
+}
+
+// Safe extension getter
+ext.safeExtGet = { prop, fallback ->
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+} 

@@ -1,0 +1,15 @@
+# Prevent EAS from overwriting manually fixed Android native code
+# This ensures our MainApplication.kt and MainActivity.kt fixes are preserved
+
+# Don't ignore the android folder entirely - we want EAS to use our local version
+# android/
+
+# But ignore specific files that might cause conflicts
+node_modules/
+.expo/
+dist/
+build/
+
+# Keep our android source files
+!android/app/src/main/java/com/shabari/app/MainActivity.kt
+!android/app/src/main/java/com/shabari/app/MainApplication.kt 
