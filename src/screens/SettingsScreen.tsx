@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Alert,
-  Clipboard,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Clipboard,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { YaraSecurityService } from '../services/YaraSecurityService';
+
+interface EngineStatus {
+  available: boolean;
+  initialized: boolean;
+  native: boolean;
+  version: string;
+  rulesCount: number;
+}
 
 interface SettingsScreenProps {
   onNavigateToUpgrade: () => void;
@@ -20,6 +30,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onNavigateToUpgrade,
   onGoBack,
 }) => {
+  const [engineStatus, setEngineStatus] = useState<EngineStatus | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
+
   const handleLogout = async () => {
     Alert.alert(
       'Logout',
@@ -180,6 +193,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
     );
   };
 
+  const handleCheckEngineStatus = async () => {
+    setIsLoadingStatus(true);
+    setEngineStatus(null);
+    try {
+      const status = await YaraSecurityService.getEngineStatus();
+      setEngineStatus(status);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get engine status.');
+    } finally {
+      setIsLoadingStatus(false);
+    }
+  };
+
   const ListItem = ({ title, subtitle, onPress, color = '#ffffff' }: any) => (
     <TouchableOpacity style={styles.listItem} onPress={onPress}>
       <View style={styles.listItemContent}>
@@ -233,6 +259,39 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
             subtitle="Learn how we protect your personal data"
             onPress={handlePrivacyPolicy}
           />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🛠️ Developer Tools</Text>
+          <ListItem
+            title="🔬 Check Engine Status"
+            subtitle="Verify if the native YARA engine is active"
+            onPress={handleCheckEngineStatus}
+          />
+          {isLoadingStatus && <ActivityIndicator style={{ marginTop: 10 }} color="#4ecdc4" />}
+          {engineStatus && (
+            <View style={styles.statusContainer}>
+              <Text style={styles.statusTitle}>YARA Engine Status</Text>
+              <View style={[styles.statusItem, engineStatus.native ? styles.statusItemSuccess : styles.statusItemWarning]}>
+                <Text style={styles.statusLabel}>Native Engine Active:</Text>
+                <Text style={[styles.statusValue, engineStatus.native ? styles.statusValueSuccess : styles.statusValueWarning]}>
+                  {engineStatus.native ? '✅ YES' : '❌ NO (Using Mock)'}
+                </Text>
+              </View>
+              <View style={styles.statusItem}>
+                <Text style={styles.statusLabel}>Initialized:</Text>
+                <Text style={styles.statusValue}>{engineStatus.initialized ? 'Yes' : 'No'}</Text>
+              </View>
+              <View style={styles.statusItem}>
+                <Text style={styles.statusLabel}>Engine Version:</Text>
+                <Text style={styles.statusValue}>{engineStatus.version}</Text>
+              </View>
+              <View style={styles.statusItem}>
+                <Text style={styles.statusLabel}>Detection Rules:</Text>
+                <Text style={styles.statusValue}>{engineStatus.rulesCount}</Text>
+              </View>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -356,8 +415,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 16,
-    color: '#5B73FF',
-    fontWeight: '600',
+    color: '#cccccc',
   },
   logoutButton: {
     backgroundColor: '#FF6B6B',
@@ -392,6 +450,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#B8BCC8',
     opacity: 0.8,
+  },
+  statusContainer: {
+    backgroundColor: '#16213e',
+    borderRadius: 10,
+    padding: 20,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#0f3460',
+  },
+  statusTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  statusItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a3b5e',
+  },
+  statusItemSuccess: {
+    backgroundColor: 'rgba(22, 160, 133, 0.1)',
+    paddingHorizontal: 10,
+    marginHorizontal: -10,
+    borderRadius: 5,
+  },
+  statusItemWarning: {
+    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+    paddingHorizontal: 10,
+    marginHorizontal: -10,
+    borderRadius: 5,
+  },
+  statusLabel: {
+    fontSize: 16,
+    color: '#cccccc',
+    fontWeight: '500',
+  },
+  statusValue: {
+    fontSize: 16,
+    color: '#ffffff',
+  },
+  statusValueSuccess: {
+    color: '#16a085',
+    fontWeight: 'bold',
+  },
+  statusValueWarning: {
+    color: '#e74c3c',
+    fontWeight: 'bold',
   },
 });
 

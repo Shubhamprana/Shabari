@@ -1,28 +1,37 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Alert,
+    Animated,
+    Dimensions,
     Modal,
     Platform,
     ScrollView,
+    StatusBar,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
+import { ActionButtonProps } from '../components/ActionGrid';
 import { Button } from '../components/Button';
-import { Header } from '../components/Header';
 import { PremiumUpgrade } from '../components/PremiumUpgrade';
 import { supabase } from '../lib/supabase';
+import { ClipboardURLMonitor } from '../services/ClipboardURLMonitor';
+import { GlobalGuardController } from '../services/GlobalGuardController';
 import { NativeFileScanner } from '../services/NativeFileScanner';
 import { otpInsightService } from '../services/OtpInsightService';
+import { PrivacyGuardService } from '../services/PrivacyGuardService';
 import { LinkScannerService } from '../services/ScannerService';
 import { YaraSecurityService } from '../services/YaraSecurityService';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { theme } from '../theme';
+
+const { width, height } = Dimensions.get('window');
 
 interface DashboardScreenProps {
   onNavigateToSecureBrowser: () => void;
@@ -56,6 +65,14 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [isScanning, setIsScanning] = useState(false);
   const [isFileScannerReady, setIsFileScannerReady] = useState(false);
   
+  // Enhanced Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const shimmerAnim = useRef(new Animated.Value(-width)).current;
+  
   // Service status tracking
   const [serviceStatus, setServiceStatus] = useState({
     yaraEngine: { initialized: false, rulesLoaded: 0 },
@@ -67,10 +84,76 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
     photoFraudDetection: { ready: false }
   });
 
+  // Preview Launch: Define core features that are always available
+  const coreFeatures = ['document-scanner', 'link-detection', 'qr-scanner'];
+  const isPreviewMode = !isPremium; // Show preview for non-premium users
+
   useEffect(() => {
+    // Set status bar style for better UI
+    StatusBar.setBarStyle('light-content', true);
+    if (Platform.OS === 'android') {
+      StatusBar.setBackgroundColor('transparent', true);
+      StatusBar.setTranslucent(true);
+    }
+
     checkSubscriptionStatus();
     loadScanStats();
     initializeServices();
+    
+    // Enhanced entrance animations with staggered effects
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 40,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Continuous animations
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+    ]).start();
+
+    // Shimmer effect for loading states
+    Animated.loop(
+      Animated.timing(shimmerAnim, {
+        toValue: width,
+        duration: 1500,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Subtle rotation animation for icons
+    Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 10000,
+        useNativeDriver: true,
+      })
+    ).start();
   }, []);
 
   const loadScanStats = async () => {
@@ -164,8 +247,18 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
   };
 
   const showPremiumUpgrade = (featureName: string) => {
+    if (isPreviewMode) {
+      Alert.alert(
+        '🚀 Coming Soon!',
+        `${featureName} is on our roadmap and will be available soon. We're working hard to bring you the best security experience!`,
+        [
+          { text: 'Got it!', style: 'default' }
+        ]
+      );
+    } else {
     setPremiumFeatureRequested(featureName);
     setShowPremiumModal(true);
+    }
   };
 
   const handleFileScan = async () => {
@@ -510,6 +603,27 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
     };
   };
 
+  const handleClipboardScan = async () => {
+    setIsScanning(true);
+    try {
+      const clipboardMonitor = ClipboardURLMonitor.getInstance();
+      const scanResult = await clipboardMonitor.scanClipboardManually();
+
+      if (scanResult.status === 'scanned' && scanResult.result) {
+        Alert.alert(
+          'Clipboard Scan Complete',
+          `URL: ${scanResult.url}\nResult: ${scanResult.result.isSafe ? 'Safe' : 'Dangerous'}\nDetails: ${scanResult.result.details}`
+        );
+      } else {
+        Alert.alert('Clipboard Scan', scanResult.message || 'No URL found to scan.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while scanning the clipboard.');
+      console.error('Clipboard scan error:', error);
+    }
+    setIsScanning(false);
+  };
+
   const handleLinkCheck = () => {
     setShowLinkModal(true);
   };
@@ -548,37 +662,54 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
     }
   };
 
-  const handleAppMonitor = () => {
+  const handleAppMonitor = async () => {
     if (!isPremium) {
-      Alert.alert(
-        '📱 Manual App Scanner',
-        'Check your installed apps for security risks.\n\n✨ Free Features:\n• Manual app scanning\n• Basic permission analysis\n• Security recommendations\n\n🔒 Upgrade to Premium for:\n• Automatic real-time monitoring\n• Advanced threat detection\n• Installation alerts',
-        [
-          { text: 'Scan Apps', onPress: () => {
-            Alert.alert('📱 Scanning Apps...', 'Manual scan complete!\n\n✅ 45 apps scanned\n⚠️ 2 apps need attention\n🔒 Check app permissions in settings');
-          }},
-          { text: 'Upgrade', onPress: () => showPremiumUpgrade('Privacy Guard') },
-          { text: 'Cancel' }
-        ]
-      );
+      showPremiumUpgrade('App Installation Guard');
       return;
     }
-
+    setIsScanning(true);
     Alert.alert(
-      '📱 Premium App Monitor',
-      `Protection Status Overview:
-      
-🛡️ Real-time Protection: Active
-📊 Apps Monitored: 50+ applications
-🔒 Permission Analysis: Advanced
-📈 Threat Detection: 99.9% accuracy
-
-✨ Premium features are fully enabled!`,
-      [
-        { text: 'View Settings', onPress: onNavigateToSettings },
-        { text: 'Close' }
-      ]
+      'Starting App Scan',
+      'Shabari will now scan all installed applications for privacy risks. This may take a moment.'
     );
+    try {
+      const privacyGuard = PrivacyGuardService.getInstance();
+      const results = await privacyGuard.scanInstalledAppsManual();
+      const summary = `Scan Complete!\n\nTotal Apps Scanned: ${results.totalApps}\nSuspicious Apps Found: ${results.suspiciousApps.length}`;
+      
+      let details = '';
+      if (results.suspiciousApps.length > 0) {
+        details = results.suspiciousApps
+          .map(app => `- ${app.appName} (Risk: ${app.riskLevel})`)
+          .join('\n');
+      }
+
+      Alert.alert('App Scan Results', `${summary}\n\n${details}`);
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred during the app scan.');
+      console.error('App scan error:', error);
+    }
+    setIsScanning(false);
+  };
+
+  const handleNetworkProtection = async () => {
+    setIsScanning(true);
+    try {
+      const globalGuard = GlobalGuardController.getInstance();
+      const success = await globalGuard.activateGuardForLimitedTime(60); // Activate for 60 minutes
+      if (success) {
+        Alert.alert(
+          'Network Protection Activated',
+          'Shabari is now monitoring your network traffic for threats. This protection will automatically turn off in 60 minutes.'
+        );
+      } else {
+        Alert.alert('Activation Failed', 'Could not start network protection. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while activating network protection.');
+      console.error('Network protection error:', error);
+    }
+    setIsScanning(false);
   };
 
   const handleFileWatchdog = () => {
@@ -638,351 +769,651 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
   };
 
   const handleSecureBrowser = () => {
+    if (!isPremium) {
+      showPremiumUpgrade('Secure Browser');
+      return;
+    }
     onNavigateToSecureBrowser();
   };
 
   const handleQRScanner = () => {
-    if (isPremium) {
-      // Navigate directly to Live QR Scanner for premium users
-      navigation?.navigate?.('LiveQRScanner');
-    } else {
-      // Show upgrade prompt for free users
-      showPremiumUpgrade('Live QR Scanner');
-    }
+    // Navigate directly to Live QR Scanner for all users in preview
+    navigation?.navigate?.('LiveQRScanner');
   };
 
   const handleSMSScanner = () => {
-    navigation?.navigate?.('SMSScanner');
+    if (!isPremium) {
+      // Show Coming Soon for SMS Shield due to false positives
+      Alert.alert(
+        '🛡️ SMS Shield - Coming Soon!',
+        'We\'re currently refining our SMS analysis algorithms to reduce false positives. This feature will be available soon with improved accuracy!',
+        [
+          {
+            text: 'Understood',
+            style: 'default',
+          },
+        ]
+      );
+      return;
+    }
+    // Premium users can still access
+    navigation?.navigate('SMSScannerScreen');
   };
 
   const handleManualSMSScanner = () => {
-    navigation?.navigate?.('ManualSMSScanner');
+    if (!isPremium) {
+      // Show Coming Soon for SMS Shield
+      Alert.alert(
+        '🛡️ SMS Shield - Coming Soon!',
+        'We\'re currently refining our SMS analysis algorithms to reduce false positives. This feature will be available soon with improved accuracy!',
+        [
+          {
+            text: 'Understood',
+            style: 'default',
+          },
+        ]
+      );
+      return;
+    }
+    // Premium users can still access
+    navigation?.navigate('ManualSMSScannerScreen');
   };
 
-  const actionGridData = [
+  const mainActions: ActionButtonProps[] = [
     {
-      title: 'Scan File',
-      subtitle: 'Check files for threats',
+      label: 'Scan File',
+      description: 'Check a file for threats',
+      icon: 'file-document-outline',
       onPress: handleFileScan,
-      color: theme.colors.primary,
-      icon: '📁',
-      gradient: true,
     },
     {
-      title: 'Check Link',
-      subtitle: 'Verify URL safety',
+      label: 'Scan Link',
+      description: 'Check a URL for threats',
+      icon: 'link-variant',
       onPress: handleLinkCheck,
-      color: theme.colors.secondary,
-      icon: '🔗',
-      gradient: true,
     },
     {
-      title: 'SMS Scanner',
-      subtitle: 'Read SMS from device',
-      onPress: handleSMSScanner,
-      color: theme.colors.accent,
-      icon: '📱',
-      gradient: true,
-    },
-    {
-      title: isPremium ? 'OTP Guard Pro' : 'Message Analyzer',
-      subtitle: isPremium ? 'AI-powered SMS protection' : 'Basic message analysis',
-      onPress: isPremium ? handleOTPInsight : onNavigateToMessageAnalysis,
-      color: '#9333EA',
-      icon: '🤖',
-      gradient: true,
-    },
-    {
-      title: 'Secure Browser',
-      subtitle: 'Browse with protection',
+      label: 'Secure Browser',
+      description: 'Browse with protection',
+      icon: 'web',
       onPress: handleSecureBrowser,
-      color: theme.colors.success,
-      icon: '🌐',
-      gradient: true,
     },
     {
-      title: isPremium ? 'Auto Monitor' : 'App Scanner',
-      subtitle: isPremium ? 'Real-time app protection' : 'Manual app check',
-      onPress: handleAppMonitor,
-      color: theme.colors.warning,
-      icon: '🛡️',
-      gradient: true,
+      label: 'SMS Scanner',
+      description: 'Review incoming texts',
+      icon: 'message-text-outline',
+      onPress: handleManualSMSScanner,
     },
-    {
-      title: isPremium ? 'File Guardian' : 'File Scanner',
-      subtitle: isPremium ? 'Auto file protection' : 'Manual file scan',
-      onPress: handleFileWatchdog,
-      color: theme.colors.danger,
-      icon: '🔍',
-      gradient: true,
-    },
-    {
-      title: isPremium ? 'QR Scanner' : 'QR Scanner Pro',
-      subtitle: isPremium ? 'Live fraud detection' : 'Upgrade for camera scanning',
-      onPress: handleQRScanner,
-      color: '#8B5CF6',
-      icon: '📷',
-      gradient: true,
-    },
-    {
-      title: 'Quarantine Folder',
-      subtitle: 'View isolated files',
-      onPress: onNavigateToQuarantine || (() => console.log('Quarantine navigation not available')),
-      color: '#FF6B6B',
-      icon: '📁',
-      gradient: true,
-    },
-    ...(isPremium && onNavigateToFeatureManagement ? [{
-      title: 'Feature Control',
-      subtitle: 'Manage premium features',
-      onPress: onNavigateToFeatureManagement,
-      color: theme.colors.info,
-      icon: '⚙️',
-      gradient: true,
-    }] : []),
   ];
+
+  const manualToolActions: ActionButtonProps[] = [
+    {
+      label: 'Scan Clipboard',
+      description: 'Check copied text for threats',
+      icon: 'clipboard-check-outline',
+      onPress: handleClipboardScan,
+    },
+    {
+      label: 'Scan Installed Apps',
+      description: 'Verify installed application safety',
+      icon: 'shield-search',
+      onPress: handleAppMonitor,
+    },
+    {
+      label: 'Network Protection',
+      description: 'Monitor network traffic for threats',
+      icon: 'lan-connect',
+      onPress: handleNetworkProtection,
+    },
+  ];
+
+  // Enhanced Status Card Component
+  const EnhancedStatusCard = ({ 
+    title, 
+    value, 
+    icon, 
+    gradient, 
+    delay = 0,
+    subtitle = ''
+  }: {
+    title: string;
+    value: number | string;
+    icon: keyof typeof MaterialCommunityIcons.glyphMap;
+    gradient: readonly [string, string, ...string[]];
+    delay?: number;
+    subtitle?: string;
+  }) => {
+    const animatedValue = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.spring(animatedValue, {
+          toValue: 1,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, []);
+
+    return (
+      <Animated.View style={[
+        styles.enhancedStatusCard,
+        {
+          transform: [
+            { translateY: animatedValue.interpolate({
+              inputRange: [0, 1],
+              outputRange: [50, 0],
+            })},
+          ],
+          opacity: animatedValue,
+        },
+      ]}>
+          <LinearGradient
+          colors={gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          style={styles.statusCardGradient}
+          >
+          {/* Shimmer Effect */}
+          <Animated.View style={[
+            styles.shimmerOverlay,
+            {
+              transform: [
+                {
+                  translateX: shimmerAnim.interpolate({
+                    inputRange: [-width, width],
+                    outputRange: [-width, width],
+                  }),
+                },
+              ],
+            },
+          ]} />
+          
+          <View style={styles.statusCardContent}>
+            <Animated.View style={[
+              styles.statusIconContainer,
+              {
+                transform: [{ scale: pulseAnim }],
+              },
+            ]}>
+              <MaterialCommunityIcons name={icon} size={32} color="#FFFFFF" />
+            </Animated.View>
+            
+            <Animated.Text style={[
+              styles.statusCardValue,
+              {
+                transform: [{ scale: pulseAnim }],
+              },
+            ]}>
+              {value}
+            </Animated.Text>
+            
+            <Text style={styles.statusCardTitle}>{title}</Text>
+            {subtitle && <Text style={styles.statusCardSubtitle}>{subtitle}</Text>}
+            </View>
+          </LinearGradient>
+      </Animated.View>
+    );
+  };
+
+  // Enhanced Action Card Component
+  const EnhancedActionCard = ({ 
+    title, 
+    subtitle, 
+    icon, 
+    gradient, 
+    onPress,
+    isPremium = false,
+    delay = 0
+  }: {
+    title: string;
+    subtitle: string;
+    icon: keyof typeof MaterialCommunityIcons.glyphMap;
+    gradient: readonly [string, string, ...string[]];
+    onPress: () => void;
+    isPremium?: boolean;
+    delay?: number;
+  }) => {
+    const animatedValue = useRef(new Animated.Value(0)).current;
+    const pressAnim = useRef(new Animated.Value(1)).current;
+    
+    // Determine if this is a "Coming Soon" feature for non-premium users
+    const isComingSoon = !isPremium && (
+      title === 'SMS Shield' || 
+      title === 'Secure Browser' || 
+      title === 'AI Guardian'
+    );
+
+    useEffect(() => {
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.spring(animatedValue, {
+          toValue: 1,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, []);
+
+    const handlePressIn = () => {
+      Animated.spring(pressAnim, {
+        toValue: 0.95,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const handlePressOut = () => {
+      Animated.spring(pressAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    return (
+      <Animated.View style={[
+        styles.enhancedActionCard,
+        {
+          transform: [
+            { scale: Animated.multiply(animatedValue, pressAnim) },
+            { translateY: animatedValue.interpolate({
+              inputRange: [0, 1],
+              outputRange: [30, 0],
+            })},
+          ],
+          opacity: animatedValue,
+        },
+      ]}>
+              <TouchableOpacity 
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={0.9}
+              >
+                <LinearGradient
+             colors={gradient}
+             start={{ x: 0, y: 0 }}
+             end={{ x: 1, y: 1 }}
+             style={[
+               styles.actionCardGradient,
+               isComingSoon && styles.comingSoonCard
+             ]}
+           >
+                           <View style={styles.actionCardContent}>
+              <View style={styles.actionIconContainer}>
+                <MaterialCommunityIcons 
+                  name={icon} 
+                  size={28} 
+                  color={isComingSoon ? '#FFFFFF' : (isPremium ? '#FFD700' : '#FFFFFF')} 
+                />
+                {isPremium && (
+                  <View style={styles.premiumBadgeAction}>
+                    <MaterialCommunityIcons name="crown" size={14} color="#FFD700" />
+            </View>
+                )}
+                {isComingSoon && (
+                  <View style={styles.comingSoonBadge}>
+                    <MaterialCommunityIcons name="rocket-launch" size={12} color="#FFFFFF" />
+                  </View>
+                )}
+          </View>
+              <Text style={[
+                styles.actionCardTitle, 
+                isPremium && styles.premiumActionText,
+                isComingSoon && styles.comingSoonTitleText
+              ]}>
+                {title}
+                </Text>
+              <Text style={[
+                styles.actionCardSubtitle,
+                isComingSoon && styles.comingSoonSubtitleText
+              ]}>
+                {subtitle}
+              </Text>
+            </View>
+                </LinearGradient>
+              </TouchableOpacity>
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Header 
-        title="शबरी (Shabari)" 
-        subtitle="भारतीय साइबर रक्षक 🛡️"
-        variant="gradient"
-        showSettings={true}
-        onSettingsPress={onNavigateToSettings}
+      {/* Enhanced Background with Gradient Overlay */}
+                <LinearGradient
+        colors={['#0D1421', '#1A1F2E', '#2D3748']}
+        style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
       
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        bounces={Platform.OS !== 'web'}
-        scrollEventThrottle={16}
-        nestedScrollEnabled={true}
-      >
-        {/* Hero Section with Traditional Pattern */}
-        <View style={styles.heroSection}>
+      {/* Animated Particle Background */}
+      <View style={styles.particleContainer}>
+        {[...Array(8)].map((_, i) => (
+          <Animated.View
+            key={i}
+            style={[
+              styles.particle,
+              {
+                transform: [
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [`${i * 45}deg`, `${(i * 45) + 360}deg`],
+                    }),
+                  },
+                ],
+                opacity: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 0.1],
+                }),
+              },
+            ]}
+          />
+        ))}
+            </View>
+
+      <Animated.View style={[styles.mainContent, { opacity: fadeAnim }]}>
+        {/* Enhanced Header with Glassmorphism */}
+        <View style={styles.headerContainer}>
           <LinearGradient
-            colors={[theme.colors.gradients.tricolor[0], theme.colors.gradients.tricolor[2]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroGradient}
+            colors={['rgba(255, 69, 0, 0.1)', 'rgba(255, 107, 53, 0.05)']}
+            style={styles.headerGradient}
           >
-            <View style={styles.heroPattern} />
-            <View style={styles.heroContent}>
-              <Text style={styles.heroEmoji}>🇮🇳</Text>
-              <Text style={styles.heroTitle}>स्वागत है</Text>
-              <Text style={styles.heroSubtitle}>Advanced Cyber Security</Text>
-              <Text style={styles.heroDescription}>
-                Traditional values, Modern protection
-              </Text>
+            <View style={styles.headerContent}>
+              <Animated.View
+                style={[
+                  styles.logoContainer,
+                  {
+                    transform: [{ scale: pulseAnim }],
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={['#FF4500', '#FF6B35']}
+                  style={styles.logoGradient}
+                >
+                  <MaterialCommunityIcons name="shield-crown" size={32} color="#FFFFFF" />
+                </LinearGradient>
+              </Animated.View>
+              
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.appTitle}>शबरी (Shabari)</Text>
+                <Text style={styles.appSubtitle}>भारतीय साइबर रक्षक 🛡️</Text>
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.settingsButton}
+                onPress={onNavigateToSettings}
+              >
+                <LinearGradient
+                  colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
+                  style={styles.settingsGradient}
+                >
+                  <MaterialCommunityIcons name="cog" size={24} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </View>
 
-        {/* Status Dashboard with Hexagonal Design */}
-        <View style={styles.statusDashboard}>
-          <Text style={styles.sectionTitle}>🔱 Protection Matrix</Text>
-          <View style={styles.hexagonalGrid}>
-            <View style={styles.hexagonalRow}>
-              <View style={[styles.hexagonalCard, styles.hexagonalPrimary]}>
-                <Text style={styles.hexagonalIcon}>🛡️</Text>
-                <Text style={styles.hexagonalTitle}>Shield</Text>
-                <Text style={styles.hexagonalValue}>{isPremium ? 'Enhanced' : 'Standard'}</Text>
-              </View>
-              <View style={[styles.hexagonalCard, styles.hexagonalSecondary]}>
-                <Text style={styles.hexagonalIcon}>🔍</Text>
-                <Text style={styles.hexagonalTitle}>Scans</Text>
-                <Text style={styles.hexagonalValue}>{scanStats.totalScans}</Text>
-              </View>
-            </View>
-            <View style={styles.hexagonalRow}>
-              <View style={[styles.hexagonalCard, styles.hexagonalDanger]}>
-                <Text style={styles.hexagonalIcon}>⚔️</Text>
-                <Text style={styles.hexagonalTitle}>Threats</Text>
-                <Text style={styles.hexagonalValue}>{scanStats.threatsBlocked}</Text>
-              </View>
-              <View style={[styles.hexagonalCard, styles.hexagonalSuccess]}>
-                <Text style={styles.hexagonalIcon}>🏰</Text>
-                <Text style={styles.hexagonalTitle}>Protected</Text>
-                <Text style={styles.hexagonalValue}>{scanStats.filesScanned}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Main Actions in Traditional Card Layout */}
-        <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>⚡ Cyber Arsenal</Text>
-          <Text style={styles.sectionSubtitle}>Advanced security tools at your command</Text>
-          
-          <View style={styles.traditionalGrid}>
-            {/* Primary Actions Row */}
-            <View style={styles.actionRow}>
-              <TouchableOpacity 
-                style={[styles.traditionalCard, styles.primaryAction]}
-                onPress={handleFileScan}
-              >
-                <LinearGradient
-                  colors={[theme.colors.gradients.primary[0], theme.colors.gradients.primary[1]]}
-                  style={styles.cardGradient}
-                >
-                  <Text style={styles.actionIcon}>📁</Text>
-                  <Text style={styles.actionTitle}>File Scanner</Text>
-                  <Text style={styles.actionSubtitle}>Advanced threat detection</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.traditionalCard, styles.secondaryAction]}
-                onPress={handleLinkCheck}
-              >
-                <LinearGradient
-                  colors={[theme.colors.gradients.cyber[0], theme.colors.gradients.cyber[1]]}
-                  style={styles.cardGradient}
-                >
-                  <Text style={styles.actionIcon}>🔗</Text>
-                  <Text style={styles.actionTitle}>Link Guardian</Text>
-                  <Text style={styles.actionSubtitle}>URL safety verification</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-
-            {/* Secondary Actions Row */}
-            <View style={styles.actionRow}>
-              <TouchableOpacity 
-                style={[styles.traditionalCard, styles.accentAction]}
-                onPress={handleManualSMSScanner}
-              >
-                <LinearGradient
-                  colors={[theme.colors.gradients.golden[0], theme.colors.gradients.golden[1]]}
-                  style={styles.cardGradient}
-                >
-                  <Text style={styles.actionIcon}>📝</Text>
-                  <Text style={styles.actionTitle}>SMS Shield</Text>
-                  <Text style={styles.actionSubtitle}>AI-powered fraud analysis</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.traditionalCard, styles.successAction]}
-                onPress={handleQRScanner}
-              >
-                <LinearGradient
-                  colors={[theme.colors.gradients.secondary[0], theme.colors.gradients.secondary[1]]}
-                  style={styles.cardGradient}
-                >
-                  <Text style={styles.actionIcon}>📷</Text>
-                  <Text style={styles.actionTitle}>QR Scanner</Text>
-                  <Text style={styles.actionSubtitle}>Live fraud detection</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Premium Features Section */}
-        <View style={styles.premiumSection}>
-          <Text style={styles.sectionTitle}>👑 Advanced Arsenal</Text>
-          <Text style={styles.sectionSubtitle}>Premium cyber defense systems</Text>
-          
-          <View style={styles.premiumGrid}>
-            <TouchableOpacity 
-              style={[styles.premiumCard, !isPremium && styles.lockedCard]}
-              onPress={isPremium ? handleSecureBrowser : () => showPremiumUpgrade('Secure Browser')}
-            >
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          bounces={Platform.OS !== 'web'}
+          scrollEventThrottle={16}
+          nestedScrollEnabled={true}
+        >
+        {/* Enhanced Status Dashboard with Shimmer Effect */}
+        <View style={styles.enhancedStatusSection}>
+          <Animated.View style={[
+            styles.sectionTitleContainer,
+            {
+              transform: [{ translateY: slideAnim }],
+              opacity: fadeAnim,
+            },
+          ]}>
               <LinearGradient
-                colors={isPremium ? 
-                  [theme.colors.gradients.royal[0], theme.colors.gradients.royal[1]] : 
-                  ['#2D3748', '#4A5568']
-                }
-                style={styles.premiumGradient}
+              colors={['rgba(255, 69, 0, 0.1)', 'rgba(255, 107, 53, 0.05)']}
+              style={styles.sectionTitleGradient}
               >
-                <Text style={styles.premiumIcon}>{isPremium ? '🌐' : '🔒'}</Text>
-                <Text style={styles.premiumTitle}>Secure Browser</Text>
-                <Text style={styles.premiumSubtitle}>
-                  {isPremium ? 'Protected browsing' : 'Premium only'}
+              <MaterialCommunityIcons name="chart-line" size={24} color="#FF4500" />
+              <Text style={styles.enhancedSectionTitle}>Security Overview</Text>
+              </LinearGradient>
+          </Animated.View>
+
+          <View style={styles.statusCardsContainer}>
+            <EnhancedStatusCard
+              title="Total Scans"
+              value={scanStats.totalScans}
+              icon="shield-check-outline"
+              gradient={['#667eea', '#764ba2']}
+              delay={200}
+              subtitle="This month"
+            />
+            <EnhancedStatusCard
+              title="Threats Blocked"
+              value={scanStats.threatsBlocked}
+              icon="shield-alert-outline"
+              gradient={['#f093fb', '#f5576c']}
+              delay={400}
+              subtitle="Real-time"
+            />
+            <EnhancedStatusCard
+              title="Files Protected"
+              value={scanStats.filesScanned}
+              icon="file-check-outline"
+              gradient={['#4facfe', '#00f2fe']}
+              delay={600}
+              subtitle="Secured"
+            />
+          </View>
+        </View>
+
+        {/* Preview Mode Banner */}
+        {isPreviewMode && (
+          <View style={styles.previewBanner}>
+              <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.previewBannerGradient}
+              >
+              <View style={styles.previewBannerContent}>
+                <MaterialCommunityIcons name="rocket-launch" size={24} color="#FFFFFF" />
+                <View style={styles.previewBannerText}>
+                  <Text style={styles.previewBannerTitle}>🚀 Preview Mode</Text>
+                  <Text style={styles.previewBannerSubtitle}>
+                    Experience Shabari's core security features. Advanced tools coming soon!
                 </Text>
-                {!isPremium && <Text style={styles.lockIcon}>🔐</Text>}
+                </View>
+              </View>
               </LinearGradient>
-            </TouchableOpacity>
+          </View>
+        )}
 
-            <TouchableOpacity 
-              style={[styles.premiumCard, !isPremium && styles.lockedCard]}
-              onPress={isPremium ? handleOTPInsight : () => showPremiumUpgrade('OTP Guard')}
-            >
+        {/* Core Features - Always Available */}
+        <View style={styles.enhancedActionsSection}>
+          <Animated.View style={[
+            styles.sectionTitleContainer,
+            {
+              transform: [{ translateY: slideAnim }],
+              opacity: fadeAnim,
+            },
+          ]}>
               <LinearGradient
-                colors={isPremium ? 
-                  [theme.colors.gradients.sunset[0], theme.colors.gradients.sunset[1]] : 
-                  ['#2D3748', '#4A5568']
-                }
-                style={styles.premiumGradient}
+              colors={['rgba(102, 126, 234, 0.1)', 'rgba(118, 75, 162, 0.05)']}
+              style={styles.sectionTitleGradient}
               >
-                <Text style={styles.premiumIcon}>{isPremium ? '🤖' : '🔒'}</Text>
-                <Text style={styles.premiumTitle}>AI Guardian</Text>
-                <Text style={styles.premiumSubtitle}>
-                  {isPremium ? 'Smart OTP protection' : 'Premium only'}
-                </Text>
-                {!isPremium && <Text style={styles.lockIcon}>🔐</Text>}
+              <MaterialCommunityIcons name="shield-outline" size={24} color="#667eea" />
+              <Text style={styles.enhancedSectionTitle}>Core Security Suite</Text>
               </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.premiumCard, !isPremium && styles.lockedCard]}
-              onPress={onNavigateToQuarantine || (() => console.log('Quarantine navigation not available'))}
-            >
-              <LinearGradient
-                colors={[theme.colors.gradients.danger[0], theme.colors.gradients.danger[1]]}
-                style={styles.premiumGradient}
-              >
-                <Text style={styles.premiumIcon}>🏛️</Text>
-                <Text style={styles.premiumTitle}>Quarantine</Text>
-                <Text style={styles.premiumSubtitle}>Isolated threats</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+          </Animated.View>
+          
+          <View style={styles.actionCardsGrid}>
+            <EnhancedActionCard
+              title="Document Scanner"
+              subtitle="AI-powered threat detection"
+              icon="file-document-outline"
+              gradient={['#667eea', '#764ba2']}
+              onPress={handleFileScan}
+              delay={300}
+            />
+            <EnhancedActionCard
+              title="Link Detection"
+              subtitle="Real-time URL protection"
+              icon="link-variant"
+              gradient={['#f093fb', '#f5576c']}
+              onPress={handleLinkCheck}
+              delay={400}
+            />
+            <EnhancedActionCard
+              title="QR Scanner"
+              subtitle="Live fraud detection"
+              icon="qrcode-scan"
+              gradient={['#4facfe', '#00f2fe']}
+              onPress={handleQRScanner}
+              delay={500}
+            />
           </View>
         </View>
 
-        {/* Activity Feed with Indian Design */}
-        <View style={styles.activitySection}>
-          <Text style={styles.sectionTitle}>📜 Security Chronicle</Text>
-          <Text style={styles.sectionSubtitle}>Recent protection events</Text>
+        {/* Advanced Features - Preview/Premium */}
+        <View style={styles.enhancedPremiumSection}>
+          <Animated.View style={[
+            styles.sectionTitleContainer,
+            {
+              transform: [{ translateY: slideAnim }],
+              opacity: fadeAnim,
+            },
+          ]}>
+            <LinearGradient
+              colors={isPremium ? 
+                ['rgba(255, 215, 0, 0.15)', 'rgba(255, 193, 7, 0.1)'] : 
+                ['rgba(255, 107, 107, 0.15)', 'rgba(255, 142, 142, 0.1)']}
+              style={styles.sectionTitleGradient}
+            >
+              <MaterialCommunityIcons 
+                name={isPremium ? "crown" : "rocket-launch"} 
+                size={24} 
+                color={isPremium ? "#FFD700" : "#FF6B6B"} 
+              />
+              <Text style={[styles.enhancedSectionTitle, !isPremium && styles.comingSoonSectionTitle]}>
+                {isPremium ? 'Premium Features' : '🚀 Coming Soon Features'}
+              </Text>
+            </LinearGradient>
+          </Animated.View>
           
-          <View style={styles.chronicleContainer}>
-            <ActivityItem 
-              icon="⚔️" 
+          <View style={styles.premiumCardsContainer}>
+            <EnhancedActionCard
+              title="SMS Shield"
+              subtitle={isPremium ? "Smart message analysis" : "Coming Soon - Enhanced Protection"}
+              icon={isPremium ? 'message-text-outline' : 'rocket-launch-outline'}
+              gradient={isPremium ? ['#43e97b', '#38f9d7'] : ['#FF6B6B', '#FF8E8E']}
+              onPress={handleManualSMSScanner}
+              isPremium={isPremium}
+              delay={600}
+            />
+            <EnhancedActionCard
+              title="Secure Browser"
+              subtitle={isPremium ? "Protected web browsing" : "Coming Soon - Safe Browsing"}
+              icon={isPremium ? 'web' : 'rocket-launch-outline'}
+              gradient={isPremium ? ['#667eea', '#764ba2'] : ['#4ECDC4', '#44A08D']}
+              onPress={handleSecureBrowser}
+              isPremium={isPremium}
+              delay={700}
+          />
+            <EnhancedActionCard
+              title="AI Guardian"
+              subtitle={isPremium ? "Advanced ML protection" : "Coming Soon - Smart Defense"}
+              icon={isPremium ? 'robot-outline' : 'rocket-launch-outline'}
+              gradient={isPremium ? ['#fa709a', '#fee140'] : ['#A8E6CF', '#7FCDCD']}
+              onPress={isPremium ? handleOTPInsight : () => showPremiumUpgrade('AI Guardian')}
+              isPremium={isPremium}
+              delay={800}
+          />
+        </View>
+        </View>
+
+        {/* Enhanced Activity Feed */}
+        <View style={styles.enhancedActivitySection}>
+          <Animated.View style={[
+            styles.sectionTitleContainer,
+            {
+              transform: [{ translateY: slideAnim }],
+              opacity: fadeAnim,
+            },
+          ]}>
+            <LinearGradient
+              colors={['rgba(76, 175, 80, 0.1)', 'rgba(139, 195, 74, 0.05)']}
+              style={styles.sectionTitleGradient}
+            >
+              <MaterialCommunityIcons name="history" size={24} color="#4CAF50" />
+              <Text style={styles.enhancedSectionTitle}>Recent Activity</Text>
+            </LinearGradient>
+          </Animated.View>
+          
+          <View style={styles.activityFeedContainer}>
+            <EnhancedActivityItem 
+              icon="shield-check-outline"
               title="Threat Neutralized" 
               subtitle="malicious-site.com → Blocked successfully" 
               time="2 min ago"
               status="danger"
             />
-            <ActivityItem 
-              icon="🛡️" 
+            <EnhancedActivityItem 
+              icon="file-check-outline"
               title="File Secured" 
               subtitle="document.pdf → Verified safe" 
               time="15 min ago"
               status="success"
             />
-            <ActivityItem 
-              icon="🔍" 
+            <EnhancedActivityItem 
+              icon="link-variant"
               title="Link Validated" 
               subtitle="news-site.com → Trusted source" 
               time="1 hour ago"
               status="info"
             />
+            <EnhancedActivityItem 
+              icon="qrcode-scan"
+              title="QR Code Scanned" 
+              subtitle="restaurant-menu.com → Safe content" 
+              time="3 hours ago"
+              status="success"
+            />
           </View>
-        </View>
-
-        {/* Footer with Traditional Pattern */}
-        <View style={styles.footerSection}>
-          <View style={styles.footerPattern} />
-          <Text style={styles.footerText}>शबरी की शक्ति से सुरक्षित</Text>
-          <Text style={styles.footerSubtext}>Protected by Shabari's Power</Text>
         </View>
 
         {/* Footer spacing */}
         <View style={styles.footerSpacing} />
       </ScrollView>
+
+      {/* Enhanced Floating Action Button */}
+      <Animated.View style={[
+        styles.floatingActionButton,
+        {
+          transform: [{ scale: scaleAnim }],
+          opacity: fadeAnim,
+        },
+      ]}>
+        <TouchableOpacity
+          style={styles.fabButton}
+          onPress={() => setShowLinkModal(true)}
+        >
+          <LinearGradient
+            colors={['#FF4500', '#FF6B35']}
+            style={styles.fabGradient}
+          >
+            <MaterialCommunityIcons name="shield-plus" size={28} color="#FFFFFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+      
+      </Animated.View>
 
       {/* Link Check Modal */}
       <Modal
@@ -997,7 +1428,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
               colors={[theme.colors.gradients.primary[0], theme.colors.gradients.primary[1]]}
               style={styles.modalHeader}
             >
-              <Text style={styles.modalTitle}>🔗 Check Link Safety</Text>
+              <Text style={styles.modalTitle}>Check Link Safety</Text>
             </LinearGradient>
             
             <View style={styles.modalBody}>
@@ -1042,39 +1473,77 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
   );
 };
 
-interface ActivityItemProps {
-  icon: string;
+// Enhanced Activity Item Component
+const EnhancedActivityItem: React.FC<{
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
   title: string;
   subtitle: string;
   time: string;
   status: 'success' | 'danger' | 'info' | 'warning';
-}
+}> = ({ icon, title, subtitle, time, status }) => {
+  const animatedValue = useRef(new Animated.Value(0)).current;
 
-const ActivityItem: React.FC<ActivityItemProps> = ({ icon, title, subtitle, time, status }) => {
-  const getStatusColor = () => {
+  useEffect(() => {
+    Animated.spring(animatedValue, {
+      toValue: 1,
+      tension: 50,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const getStatusConfig = () => {
     switch (status) {
-      case 'success': return theme.colors.success;
-      case 'danger': return theme.colors.danger;
-      case 'warning': return theme.colors.warning;
-      case 'info': return theme.colors.info;
-      default: return theme.colors.text.secondary;
+      case 'success': 
+        return { color: '#50C878', gradient: ['#a8edea', '#fed6e3'] };
+      case 'danger': 
+        return { color: '#E25C5C', gradient: ['#fa709a', '#fee140'] };
+      case 'warning': 
+        return { color: '#FFB020', gradient: ['#ffecd2', '#fcb69f'] };
+      case 'info': 
+        return { color: '#64B5F6', gradient: ['#4facfe', '#00f2fe'] };
+      default: 
+        return { color: '#6c757d', gradient: ['#e9ecef', '#dee2e6'] };
     }
   };
 
+  const statusConfig = getStatusConfig();
+
   return (
-    <View style={styles.activityItem}>
-      <View style={styles.activityIcon}>
-        <Text style={styles.activityIconText}>{icon}</Text>
+    <Animated.View style={[
+      styles.enhancedActivityItem,
+      {
+        transform: [
+          { 
+            translateX: animatedValue.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-50, 0],
+            })
+          },
+          { scale: animatedValue },
+        ],
+        opacity: animatedValue,
+      },
+    ]}>
+      <LinearGradient
+        colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+        style={styles.activityItemGradient}
+      >
+        <View style={styles.activityItemContent}>
+          <View style={[styles.enhancedActivityIcon, { backgroundColor: statusConfig.color }]}>
+            <MaterialCommunityIcons name={icon} size={20} color="#FFFFFF" />
       </View>
-      <View style={styles.activityContent}>
-        <Text style={styles.activityTitle}>{title}</Text>
-        <Text style={styles.activitySubtitle}>{subtitle}</Text>
+          <View style={styles.activityItemText}>
+            <Text style={styles.enhancedActivityTitle}>{title}</Text>
+            <Text style={styles.enhancedActivitySubtitle}>{subtitle}</Text>
       </View>
-      <View style={styles.activityMeta}>
-        <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-        <Text style={styles.activityTime}>{time}</Text>
+          <View style={styles.activityItemMeta}>
+            <View style={[styles.enhancedStatusDot, { backgroundColor: statusConfig.color }]} />
+            <Text style={styles.enhancedActivityTime}>{time}</Text>
       </View>
     </View>
+      </LinearGradient>
+    </Animated.View>
   );
 };
 
@@ -1082,6 +1551,108 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background.primary,
+  },
+
+  // Enhanced Background Styles
+  backgroundGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+
+  particleContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
+
+  particle: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FF4500',
+    opacity: 0.1,
+    top: Math.random() * height,
+    left: Math.random() * width,
+  },
+
+  mainContent: {
+    flex: 1,
+    zIndex: 1,
+  },
+
+  // Enhanced Header Styles
+  headerContainer: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+
+  headerGradient: {
+    borderRadius: theme.borderRadius.xl,
+    overflow: 'hidden',
+    ...theme.shadows.glow,
+  },
+
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+  },
+
+  logoContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    overflow: 'hidden',
+    marginRight: theme.spacing.md,
+  },
+
+  logoGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  headerTextContainer: {
+    flex: 1,
+  },
+
+  appTitle: {
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    marginBottom: 2,
+  },
+
+  appSubtitle: {
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.text.secondary,
+    fontWeight: '500',
+  },
+
+  settingsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+
+  settingsGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   scrollView: {
@@ -1092,6 +1663,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: Platform.OS === 'ios' ? theme.spacing.xxxl : theme.spacing.xxl,
     paddingHorizontal: theme.spacing.sm,
+  },
+  
+  section: {
+    marginVertical: theme.spacing.lg,
   },
   
   actionSection: {
@@ -1137,7 +1712,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.tertiary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.sm,
+    marginRight: theme.spacing.md,
   },
   
   activityIconText: {
@@ -1146,20 +1721,17 @@ const styles = StyleSheet.create({
   
   activityContent: {
     flex: 1,
-    paddingRight: theme.spacing.xs,
   },
   
   activityTitle: {
     fontSize: theme.typography.sizes.sm,
     fontWeight: '600',
     color: theme.colors.text.primary,
-    marginBottom: 2,
   },
   
   activitySubtitle: {
     fontSize: theme.typography.sizes.xs,
     color: theme.colors.text.secondary,
-    lineHeight: 16,
   },
   
   activityMeta: {
@@ -1174,72 +1746,8 @@ const styles = StyleSheet.create({
   },
   
   activityTime: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.xs,
     color: theme.colors.text.tertiary,
-    textAlign: 'center',
-    minWidth: 50,
-  },
-  
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: theme.colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing.md,
-  },
-  
-  modalContent: {
-    width: '100%',
-    maxWidth: Platform.OS === 'web' ? 400 : '95%',
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.borderRadius.xl,
-    overflow: 'hidden',
-    ...theme.shadows.large,
-  },
-  
-  modalHeader: {
-    padding: theme.spacing.md,
-    alignItems: 'center',
-  },
-  
-  modalTitle: {
-    fontSize: Platform.OS === 'web' ? theme.typography.sizes.lg : theme.typography.sizes.md,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-  },
-  
-  modalBody: {
-    padding: theme.spacing.md,
-  },
-  
-  modalLabel: {
-    fontSize: theme.typography.sizes.sm,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  
-  urlInput: {
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.sizes.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border.primary,
-    marginBottom: theme.spacing.md,
-    minHeight: 44,
-  } as any,
-  
-  modalActions: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  
-  modalButton: {
-    flex: 1,
   },
 
   // Welcome Card styles
@@ -1494,10 +2002,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
 
-  actionSubtitle: {
-    fontSize: theme.typography.sizes.xs,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
+  premiumActionText: {
+    color: '#FFD700',
   },
 
   // Premium Features section styles
@@ -1595,6 +2101,455 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  // New styles for manual security tools
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    marginHorizontal: -theme.spacing.sm,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: theme.colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+
+  modalContent: {
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 400 : '95%',
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.borderRadius.xl,
+    overflow: 'hidden',
+    ...theme.shadows.large,
+  },
+
+  modalHeader: {
+    padding: theme.spacing.md,
+    alignItems: 'center',
+  },
+
+  modalTitle: {
+    fontSize: Platform.OS === 'web' ? theme.typography.sizes.lg : theme.typography.sizes.md,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+  },
+
+  modalBody: {
+    padding: theme.spacing.md,
+  },
+
+  modalLabel: {
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+
+  urlInput: {
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.sizes.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border.primary,
+    marginBottom: theme.spacing.md,
+    minHeight: 44,
+  } as any,
+
+  modalActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+
+  modalButton: {
+    flex: 1,
+    marginHorizontal: theme.spacing.sm,
+  },
+
+  // Enhanced Status Dashboard styles
+  enhancedStatusSection: {
+    marginBottom: theme.spacing.md,
+  },
+
+  sectionTitleContainer: {
+    marginBottom: theme.spacing.md,
+    marginHorizontal: theme.spacing.md,
+  },
+
+  sectionTitleGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 69, 0, 0.2)',
+  },
+
+  enhancedSectionTitle: {
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    marginLeft: theme.spacing.sm,
+    flex: 1,
+  },
+
+  statusCardsContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+
+  enhancedStatusCard: {
+    flex: 1,
+    minHeight: 100,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+    ...theme.shadows.medium,
+  },
+
+  statusCardGradient: {
+    flex: 1,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+    overflow: 'hidden',
+  },
+
+  shimmerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    opacity: 0.3,
+  },
+
+  statusCardContent: {
+    position: 'relative',
+    zIndex: 1,
+    alignItems: 'center',
+  },
+
+  statusIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+
+  iconGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: theme.colors.background.tertiary,
+  },
+
+  statusCardValue: {
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+  },
+
+  statusCardTitle: {
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+  },
+
+  statusCardSubtitle: {
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+
+  // Enhanced Quick Actions styles
+  enhancedActionsSection: {
+    marginBottom: theme.spacing.md,
+  },
+
+  actionCardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
+  },
+
+  enhancedActionCard: {
+    width: '47%',
+    minHeight: 120,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+    ...theme.shadows.medium,
+  },
+
+  actionCardGradient: {
+    flex: 1,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+  },
+
+  actionCardGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.background.tertiary,
+  },
+
+  actionCardContent: {
+    position: 'relative',
+    zIndex: 1,
+    alignItems: 'center',
+  },
+
+  actionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+
+  premiumBadgeAction: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 18,
+    padding: theme.spacing.xs,
+  },
+
+  actionCardTitle: {
+    fontSize: theme.typography.sizes.md,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+  },
+
+  actionCardSubtitle: {
+    fontSize: theme.typography.sizes.xs,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+
+  // Enhanced Premium Features styles
+  enhancedPremiumSection: {
+    marginBottom: theme.spacing.md,
+  },
+
+  premiumCardsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
+  },
+
+  // Enhanced Activity Feed styles
+  enhancedActivitySection: {
+    marginBottom: theme.spacing.md,
+  },
+
+  activityFeedContainer: {
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+  },
+
+  enhancedActivityItem: {
+    flex: 1,
+    minHeight: 60,
+    borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
+    ...theme.shadows.medium,
+  },
+
+  activityItemGradient: {
+    flex: 1,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 60,
+  },
+
+  activityItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  enhancedActivityIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.background.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.md,
+  },
+
+  activityItemText: {
+    flex: 1,
+  },
+
+  enhancedActivityTitle: {
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+  },
+
+  enhancedActivitySubtitle: {
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.text.secondary,
+  },
+
+  activityItemMeta: {
+    alignItems: 'flex-end',
+  },
+
+  enhancedStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginBottom: theme.spacing.xs,
+  },
+
+  enhancedActivityTime: {
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.text.tertiary,
+  },
+
+  // Coming Soon styles
+  comingSoonCard: {
+    opacity: 0.95,
+  },
+
+  comingSoonBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+
+  comingSoonText: {
+    color: '#666666',
+    opacity: 0.8,
+  },
+
+  comingSoonSubtitle: {
+    color: '#888888',
+    opacity: 0.7,
+  },
+
+  comingSoonSectionTitle: {
+    color: '#FF6B6B',
+    fontWeight: '700',
+  },
+
+  comingSoonTitleText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+
+  comingSoonSubtitleText: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+
+  // Enhanced Floating Action Button styles
+  floatingActionButton: {
+    position: 'absolute',
+    bottom: theme.spacing.xl,
+    right: theme.spacing.md,
+    borderRadius: theme.borderRadius.xl,
+    overflow: 'hidden',
+    ...theme.shadows.glow,
+  },
+
+  fabButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 8,
+  },
+
+  fabGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+
+  previewBanner: {
+    marginBottom: theme.spacing.md,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+    ...theme.shadows.medium,
+  },
+
+  previewBannerGradient: {
+    flex: 1,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  previewBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  previewBannerText: {
+    marginLeft: theme.spacing.sm,
+    alignItems: 'center',
+  },
+
+  previewBannerTitle: {
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+
+  previewBannerSubtitle: {
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
 });
 
 export default DashboardScreen;

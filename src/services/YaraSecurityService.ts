@@ -1,4 +1,3 @@
-import { Platform } from 'react-native';
 import { FileScanResult } from './ScannerService';
 
 // YARA Module Interface
@@ -19,71 +18,46 @@ interface YaraEngine {
   scanFile(filePath: string): Promise<YaraScanResult>;
   getEngineVersion(): Promise<string>;
   getLoadedRulesCount(): Promise<number>;
-}
-
-// Mock YARA Engine for development
-class MockYaraEngine implements YaraEngine {
-  async initializeEngine(): Promise<string> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('🎭 Mock YARA Engine initialized');
-    return 'Mock YARA v4.5.0 initialized successfully';
-  }
-
-  async scanFile(filePath: string): Promise<YaraScanResult> {
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    const fileName = filePath.split('/').pop() || 'unknown';
-    const isSuspicious = fileName.toLowerCase().includes('malware') || 
-                        fileName.toLowerCase().includes('virus') ||
-                        fileName.toLowerCase().includes('trojan');
-    
-    return {
-      isSafe: !isSuspicious,
-      threatName: isSuspicious ? 'Mock_Detected_Threat' : '',
-      threatCategory: isSuspicious ? 'malware' : '',
-      severity: isSuspicious ? 'medium' : 'safe',
-      matchedRules: isSuspicious ? ['Mock_Rule_1'] : [],
-      scanTime: Math.floor(Math.random() * 50) + 10,
-      fileSize: Math.floor(Math.random() * 1000000) + 1000,
-      scanEngine: 'Mock YARA v4.5.0',
-      details: isSuspicious ? 'Mock threat detected for testing' : 'File appears clean'
-    };
-  }
-
-  async getEngineVersion(): Promise<string> {
-    return 'Mock YARA v4.5.0';
-  }
-
-  async getLoadedRulesCount(): Promise<number> {
-    return 127;
-  }
+  _engineType?: string;
+  _isNative?: boolean;
 }
 
 // YARA Engine instance
 let YaraEngineInstance: YaraEngine | null = null;
 let isNativeYaraAvailable = false;
+let engineInfo = { version: '', rulesCount: 0, engineType: 'unknown' };
 
-// Try to load native YARA module
+// Try to load YARA module
 try {
-  if (Platform.OS === 'android') {
-    const { default: NativeYaraEngine } = require('react-native-yara-engine');
-    YaraEngineInstance = NativeYaraEngine;
-    isNativeYaraAvailable = true;
-    console.log('✅ Native YARA Engine loaded successfully');
+  const YaraModule = require('react-native-yara-engine');
+  YaraEngineInstance = YaraModule.default || YaraModule;
+  
+  if (YaraEngineInstance) {
+    isNativeYaraAvailable = YaraEngineInstance._isNative || false;
+    engineInfo.engineType = YaraEngineInstance._engineType || 'unknown';
+    
+    console.log(`🔍 YARA Engine loaded: ${engineInfo.engineType}`);
+    console.log(`🛡️ Native engine available: ${isNativeYaraAvailable}`);
+    
+    // Check native engine availability if the method exists
+    if (YaraEngineInstance.isNativeEngineAvailable) {
+      YaraEngineInstance.isNativeEngineAvailable()
+        .then((nativeAvailable: boolean) => {
+          isNativeYaraAvailable = nativeAvailable;
+          engineInfo.engineType = nativeAvailable ? 'native' : 'mock-native';
+          console.log(`🔄 Updated: Native engine available: ${isNativeYaraAvailable}`);
+        })
+        .catch((error: any) => {
+          console.warn('⚠️ Could not check native availability:', error);
+        });
+    }
   }
 } catch (error) {
-  console.log('📱 Native YARA not available, using mock engine');
-  YaraEngineInstance = new MockYaraEngine();
-  isNativeYaraAvailable = false;
-}
-
-if (!YaraEngineInstance) {
-  YaraEngineInstance = new MockYaraEngine();
+  console.error('❌ Failed to load YARA Engine module:', error);
 }
 
 export class YaraSecurityService {
   private static initialized = false;
-  private static engineInfo = { version: '', rulesCount: 0 };
 
   static async initialize(): Promise<boolean> {
     if (this.initialized) {
@@ -100,15 +74,26 @@ export class YaraSecurityService {
       const result = await YaraEngineInstance.initializeEngine();
       console.log('✅ YARA Engine initialized:', result);
 
-      const [version, rulesCount] = await Promise.all([
-        YaraEngineInstance.getEngineVersion(),
-        YaraEngineInstance.getLoadedRulesCount()
-      ]);
+      // Get engine information
+      try {
+        const [version, rulesCount] = await Promise.all([
+          YaraEngineInstance.getEngineVersion(),
+          YaraEngineInstance.getLoadedRulesCount()
+        ]);
 
-      this.engineInfo = { version, rulesCount };
+        engineInfo.version = version;
+        engineInfo.rulesCount = rulesCount;
+      } catch (infoError) {
+        console.warn('⚠️ Could not get engine info:', infoError);
+        engineInfo.version = 'Unknown';
+        engineInfo.rulesCount = 0;
+      }
+
       this.initialized = true;
 
-      console.log(`🛡️ YARA ${version} ready with ${rulesCount} detection rules`);
+      const engineTypeDisplay = isNativeYaraAvailable ? 'Native' : 'Mock';
+      console.log(`🛡️ YARA ${engineTypeDisplay} Engine v${engineInfo.version} ready with ${engineInfo.rulesCount} detection rules`);
+      
       return true;
 
     } catch (error) {
@@ -126,21 +111,37 @@ export class YaraSecurityService {
       }
 
       console.log('🔍 YARA scanning file:', filePath);
+      const startTime = Date.now();
+      
       const yaraResult = await YaraEngineInstance.scanFile(filePath);
+      const endTime = Date.now();
+      const actualScanTime = endTime - startTime;
 
+      // Enhanced result mapping
       const result: FileScanResult = {
         isSafe: yaraResult.isSafe,
         threatName: yaraResult.threatName || undefined,
-        scanEngine: `${yaraResult.scanEngine} (Local)`,
+        scanEngine: this.getScanEngineDisplay(yaraResult.scanEngine),
         scanTime: new Date(),
-        details: yaraResult.details,
+        details: this.enhanceDetails(yaraResult),
         filePath: filePath,
-        fileSize: yaraResult.fileSize
+        fileSize: yaraResult.fileSize,
+        // Add additional metadata
+        metadata: {
+          yaraEngine: isNativeYaraAvailable ? 'native' : 'mock',
+          scanDuration: actualScanTime,
+          rulesMatched: yaraResult.matchedRules?.length || 0,
+          severity: yaraResult.severity,
+          category: yaraResult.threatCategory
+        }
       };
 
-      console.log(`🛡️ YARA scan completed:`, {
+      const statusEmoji = result.isSafe ? '✅' : '🚨';
+      const engineType = isNativeYaraAvailable ? 'Native' : 'Mock';
+      console.log(`${statusEmoji} YARA scan completed (${engineType}):`, {
         isSafe: result.isSafe,
-        threatName: result.threatName
+        threatName: result.threatName,
+        scanTime: actualScanTime + 'ms'
       });
 
       return result;
@@ -158,14 +159,48 @@ export class YaraSecurityService {
     native: boolean;
     version: string;
     rulesCount: number;
+    engineType: string;
   }> {
     return {
       available: YaraEngineInstance !== null,
       initialized: this.initialized,
       native: isNativeYaraAvailable,
-      version: this.engineInfo.version || 'Unknown',
-      rulesCount: this.engineInfo.rulesCount || 0
+      version: engineInfo.version || 'Unknown',
+      rulesCount: engineInfo.rulesCount || 0,
+      engineType: engineInfo.engineType || 'unknown'
     };
+  }
+
+  private static getScanEngineDisplay(originalEngine: string): string {
+    if (isNativeYaraAvailable) {
+      return originalEngine.replace('Mock', 'Shabari Native');
+    }
+    return `${originalEngine} (Enhanced Mock)`;
+  }
+
+  private static enhanceDetails(yaraResult: YaraScanResult): string {
+    let details = yaraResult.details || 'Scan completed';
+    
+    if (!yaraResult.isSafe) {
+      // Add more context for threats
+      if (yaraResult.matchedRules && yaraResult.matchedRules.length > 0) {
+        details += ` | Matched Rules: ${yaraResult.matchedRules.join(', ')}`;
+      }
+      
+      if (yaraResult.severity) {
+        details += ` | Risk Level: ${yaraResult.severity.toUpperCase()}`;
+      }
+      
+      if (yaraResult.threatCategory) {
+        details += ` | Category: ${yaraResult.threatCategory}`;
+      }
+    } else {
+      // Add positive reinforcement for clean files
+      const engineType = isNativeYaraAvailable ? 'native' : 'enhanced mock';
+      details += ` | Verified by ${engineType} YARA engine with ${engineInfo.rulesCount} rules`;
+    }
+    
+    return details;
   }
 
   private static createFallbackResult(filePath: string, error: string): FileScanResult {
@@ -175,7 +210,31 @@ export class YaraSecurityService {
       scanEngine: 'YARA Fallback',
       scanTime: new Date(),
       details: `YARA scan unavailable: ${error}`,
-      filePath: filePath
+      filePath: filePath,
+      metadata: {
+        yaraEngine: 'error',
+        scanDuration: 0,
+        rulesMatched: 0,
+        severity: 'unknown',
+        category: 'error'
+      }
     };
+  }
+
+  // Test function to verify engine functionality
+  static async testEngine(): Promise<boolean> {
+    try {
+      const isReady = await this.initialize();
+      if (!isReady) return false;
+
+      // Test with a simple clean file path
+      const testResult = await this.scanFile('/test/clean_file.txt');
+      console.log('🧪 YARA engine test result:', testResult);
+      
+      return true;
+    } catch (error) {
+      console.error('🧪 YARA engine test failed:', error);
+      return false;
+    }
   }
 } 

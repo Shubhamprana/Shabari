@@ -57,3 +57,4 @@ echo.
 echo 💡 If you encounter issues, check the guide in: open-android-studio.md
 echo.
 pause 
+

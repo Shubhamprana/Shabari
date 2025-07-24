@@ -8,7 +8,10 @@
     "android": "expo run:android",
     "lint": "expo lint",
     "ios": "expo run:ios",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "build:playstore": "node build-playstore-aab.js",
+    "build:aab": "eas build --platform android --profile playstore",
+    "build:check": "node validate-build-setup.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",

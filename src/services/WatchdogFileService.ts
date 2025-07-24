@@ -26,16 +26,14 @@ export class WatchdogFileService {
   private nativeModule: WatchdogNativeModule;
   private eventSubscription: any = null;
   
-  // Target directories for monitoring per doccument-image-file.md specifications
-  private readonly TARGET_DIRECTORIES = [
-    '/storage/emulated/0/Download',           // Environment.DIRECTORY_DOWNLOADS
-    '/storage/emulated/0/Pictures',           // Environment.DIRECTORY_PICTURES  
-    '/storage/emulated/0/WhatsApp/Media/WhatsApp Images',
-    '/storage/emulated/0/WhatsApp/Media/WhatsApp Documents',
-    '/storage/emulated/0/WhatsApp/Media/WhatsApp Video',
-    '/storage/emulated/0/WhatsApp/Media/WhatsApp Audio',
-    '/storage/emulated/0/Telegram',
-    '/storage/emulated/0/Downloads',
+  // COMPLIANCE: Directory monitoring disabled for Play Store compliance
+  // Automatic monitoring of system directories violates scoped storage policies
+  private readonly TARGET_DIRECTORIES: string[] = [
+    // REMOVED: All system directory monitoring for Play Store compliance
+    // '/storage/emulated/0/Download',           // SCOPED STORAGE VIOLATION
+    // '/storage/emulated/0/Pictures',           // SCOPED STORAGE VIOLATION
+    // '/storage/emulated/0/WhatsApp/Media/',    // SCOPED STORAGE VIOLATION
+    // '/storage/emulated/0/Telegram',           // SCOPED STORAGE VIOLATION
   ];
 
   private constructor() {
@@ -55,21 +53,11 @@ export class WatchdogFileService {
     // This would normally be a real native module, but for development we'll create a mock
     return {
       startFileWatching: async () => {
-        console.log('🔍 WatchdogFileService: Mock native module - starting file watching');
+        console.log('🔒 WatchdogFileService: Automatic file watching disabled for Play Store compliance');
+        console.log('🔒 Scoped storage policies prevent automatic directory monitoring');
         
-        if (Platform.OS !== 'android') {
-          console.log('⚠️ WatchdogFileService only supported on Android');
-          return false;
-        }
-        
-        // Simulate starting the native foreground service
-        console.log('🛡️ Starting native foreground service for file monitoring...');
-        console.log('📁 Monitoring directories:', this.TARGET_DIRECTORIES);
-        
-        // Start mock file detection simulation for demo
-        this.startMockFileDetection();
-        
-        return true;
+        // COMPLIANCE: No automatic file monitoring allowed
+        return false;
       },
       
       stopFileWatching: async () => {

@@ -26,26 +26,32 @@ module.exports = {
       "backgroundColor": "#ffffff"
     },
     "package": "com.shabari.app",
-    "versionCode": 1,
+    "versionCode": 61,
+    "privacyPolicy": "https://shubham485.github.io/shabari-privacy-policy/",
     "permissions": [
       "android.permission.CAMERA",
-      "android.permission.READ_EXTERNAL_STORAGE",
-      "android.permission.WRITE_EXTERNAL_STORAGE",
       "android.permission.READ_SMS",
-      "android.permission.RECEIVE_SMS",
       "android.permission.INTERNET",
-      "android.permission.ACCESS_NETWORK_STATE",
-      "android.permission.WAKE_LOCK",
-      "android.permission.RECEIVE_BOOT_COMPLETED",
-      "android.permission.FOREGROUND_SERVICE",
-      "android.permission.ACCESS_NOTIFICATION_POLICY",
-      "android.permission.READ_PHONE_STATE"
+      "android.permission.ACCESS_NETWORK_STATE"
     ]
   },
   "web": {
     "favicon": "./assets/images/favicon.png"
   },
   "scheme": "shabari",
+  "intentFilters": [
+    {
+      "action": "VIEW",
+      "autoVerify": true,
+      "data": [
+        {
+          "scheme": "https",
+          "host": "mynbtxrbqbmhxvaimfhs.supabase.co"
+        }
+      ],
+      "category": ["BROWSABLE", "DEFAULT"]
+    }
+  ],
   "plugins": [
     "expo-dev-client",
     "expo-notifications",
@@ -94,7 +100,8 @@ module.exports = {
           }
         }
       }
-    ]
+    ],
+    "./react-native-yara-engine/app.plugin.js"
   ],
 
   "owner": "shubham485",

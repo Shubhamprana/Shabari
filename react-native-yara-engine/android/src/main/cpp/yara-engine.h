@@ -3,6 +3,7 @@
 
 #include <jni.h>
 #include <stdbool.h>
+#include "yara/include/yara.h"
 
 #ifdef __cplusplus
 extern "C" {

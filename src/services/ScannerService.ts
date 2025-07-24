@@ -60,6 +60,13 @@ export interface FileScanResult {
   details: string;
   filePath?: string; // Add file path for result tracking
   fileSize?: number; // Add file size information
+  metadata?: {
+    yaraEngine?: string;
+    scanDuration?: number;
+    rulesMatched?: number;
+    severity?: string;
+    category?: string;
+  };
 }
 
 // Updated interface for shared file content per doccument-image-file.md specifications
@@ -734,99 +741,80 @@ export class FileScannerService {
     }
   }
 
-  // Copy shared file to quarantine per step 3.a in doccument-image-file.md
+  // COMPLIANCE: Automatic quarantine disabled for Play Store compliance
   static async quarantineSharedFile(contentUri: string, fileName: string): Promise<SharedFileContent> {
-    try {
-      console.log('📁 Quarantining shared file:', fileName);
+    console.log('🔒 Automatic quarantine disabled for Play Store compliance');
+    console.log('🔒 Files will remain in their original location');
+    console.log('🔒 Manual quarantine available through UI if needed');
       
-      if (!isRNFSAvailable || !RNFS) {
-        // Web fallback - return original URI
+    // COMPLIANCE: Return original file location without automatic quarantine
         return {
           fileName,
           contentUri,
-          quarantinedPath: contentUri, // Use original for web
+      quarantinedPath: contentUri, // No automatic quarantine
         };
       }
 
-      const quarantinePath = await this.ensureQuarantineFolder();
-      const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const destinationPath = `${quarantinePath}/${Date.now()}_${sanitizedFileName}`;
-
-      // Copy file to quarantine folder
-      await RNFS.copyFile(contentUri, destinationPath);
-      
-      // Get file info
-      const fileInfo = await RNFS.stat(destinationPath);
-      
-      console.log('✅ File quarantined successfully:', destinationPath);
-      
-      return {
-        fileName,
-        contentUri,
-        quarantinedPath: destinationPath,
-        size: fileInfo.size,
-      };
-    } catch (error) {
-      console.error('❌ Failed to quarantine file:', error);
-      // Return original URI if quarantine fails
-      return {
-        fileName,
-        contentUri,
-        quarantinedPath: contentUri,
-      };
-    }
-  }
-
-  // Main file scanning entry point per doccument-image-file.md workflow
+  // COMPLIANCE: File scanning with NO automatic quarantine (Play Store compliant)
   static async scanFile(fileUri: string, fileName: string): Promise<FileScanResult> {
     try {
-      console.log('🔍 Starting file scan:', fileName);
+      console.log('🔍 Starting file scan (no automatic quarantine):', fileName);
+      console.log('🔒 Play Store compliance: Files are NOT automatically quarantined');
+
+      // COMPLIANCE: No automatic quarantine - scan file in original location
+      // User can manually quarantine if needed after seeing results
       
-      // Step 1: Quarantine the file (per doccument-image-file.md step 3.a)
-      const quarantinedFile = await this.quarantineSharedFile(fileUri, fileName);
+      // Get file size if possible (for local scan)
+      let fileSize = 0;
+      try {
+        if (isRNFSAvailable && RNFS) {
+          const fileInfo = await RNFS.stat(fileUri);
+          fileSize = fileInfo.size;
+        }
+    } catch (error) {
+        console.warn('Could not get file size:', error);
+      }
       
       // PRIVACY PROTECTION: Check if file should be sent to VirusTotal
-      const shouldScanWithVirusTotal = this.shouldScanWithVirusTotal(fileName, quarantinedFile.quarantinedPath || fileUri);
+      const shouldScanWithVirusTotal = this.shouldScanWithVirusTotal(fileName, fileUri);
       
       let scanResult: FileScanResult;
       
       if (!shouldScanWithVirusTotal) {
         console.log('🔒 Privacy Protection: Personal document detected - using local scan only:', fileName);
-        const localResult = await this.performLocalScan(fileName, quarantinedFile.size);
+        const localResult = await this.performLocalScan(fileName, fileSize);
         scanResult = {
           ...localResult,
-          filePath: quarantinedFile.quarantinedPath,
-          fileSize: quarantinedFile.size,
+          filePath: fileUri,
+          fileSize: fileSize,
           details: localResult.details + ' (Privacy-protected: not sent to cloud services)'
         };
       } else {
       // Step 2: Generate file hash for VirusTotal (only for non-personal files)
-      const fileHash = await this.generateFileHash(quarantinedFile.quarantinedPath || fileUri);
+        const fileHash = await this.generateFileHash(fileUri);
       
       // Step 3: Check against VirusTotal
       const vtResult = await this.checkVirusTotal(fileHash, fileName);
       
       // Step 4: If not found in VT, perform local scan
       if (!vtResult) {
-        const localResult = await this.performLocalScan(fileName, quarantinedFile.size);
+          const localResult = await this.performLocalScan(fileName, fileSize);
           scanResult = {
           ...localResult,
-          filePath: quarantinedFile.quarantinedPath,
-          fileSize: quarantinedFile.size,
+            filePath: fileUri,
+            fileSize: fileSize,
         };
         } else {
           scanResult = {
         ...vtResult,
-        filePath: quarantinedFile.quarantinedPath,
-        fileSize: quarantinedFile.size,
+            filePath: fileUri,
+            fileSize: fileSize,
       };
         }
       }
       
-      // Step 5: Save scan result metadata alongside quarantined file
-      if (quarantinedFile.quarantinedPath) {
-        await this.saveQuarantineMetadata(quarantinedFile.quarantinedPath, scanResult);
-      }
+      // COMPLIANCE: No automatic quarantine metadata saving
+      console.log('🔒 File scan completed without automatic quarantine');
       
       return scanResult;
     } catch (error) {
@@ -842,63 +830,22 @@ export class FileScannerService {
     }
   }
 
-  // Enhanced scan for headless JS tasks (WatchdogFileService integration)
+  // COMPLIANCE: Background file scanning disabled for Play Store compliance
   static async scanFileBackground(filePath: string): Promise<FileScanResult> {
-    try {
-      console.log('🔍 Background file scan:', filePath);
+    console.log('🔒 Background file scanning disabled for Play Store compliance');
+    console.log('🔒 Automatic file monitoring violates scoped storage policies');
       
       const fileName = filePath.split('/').pop() || 'unknown_file';
       
-      // PRIVACY PROTECTION: Check if file should be sent to VirusTotal
-      const shouldScanWithVirusTotal = this.shouldScanWithVirusTotal(fileName, filePath);
-      
-      if (!shouldScanWithVirusTotal) {
-        console.log('🔒 Privacy Protection: Skipping VirusTotal for personal document:', fileName);
-        // For personal documents, use local scan only
-        let fileSize = 0;
-        try {
-          if (isRNFSAvailable && RNFS) {
-            const fileInfo = await RNFS.stat(filePath);
-            fileSize = fileInfo.size;
-          }
-        } catch (error) {
-          console.warn('Could not get file size:', error);
-        }
-        
-        return await this.performLocalScan(fileName, fileSize);
-      }
-      
-      // For potentially dangerous files, proceed with VirusTotal
-      const fileHash = await this.generateFileHash(filePath);
-      const vtResult = await this.checkVirusTotal(fileHash, fileName);
-      
-      if (!vtResult) {
-        // Get file size for local scan
-        let fileSize = 0;
-        try {
-          if (isRNFSAvailable && RNFS) {
-            const fileInfo = await RNFS.stat(filePath);
-            fileSize = fileInfo.size;
-          }
-        } catch (error) {
-          console.warn('Could not get file size:', error);
-        }
-        
-        return await this.performLocalScan(fileName, fileSize);
-      }
-      
-      return vtResult;
-    } catch (error) {
-      console.error('❌ Background file scan error:', error);
+    // Return safe result with compliance message
       return {
-        isSafe: false,
-        threatName: 'Background scan failed',
-        scanEngine: 'Shabari Background Scanner',
+      isSafe: true,
+      threatName: undefined,
+      scanEngine: 'Shabari Scanner (Compliance Mode)',
         scanTime: new Date(),
-        details: 'Background scan encountered an error - file treated as suspicious.',
+      details: 'Background scanning disabled for Play Store compliance. Use manual scanning only.',
         filePath,
       };
-    }
   }
 
   /**

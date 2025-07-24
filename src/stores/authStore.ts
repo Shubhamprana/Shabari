@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { supabase } from '../lib/supabase';
+import { sendEmailVerification, sendPasswordReset, supabase } from '../lib/supabase';
 
 interface User {
   id: string;
@@ -21,6 +21,7 @@ interface AuthState {
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   clearError: () => void;
   setSessionInitialized: (initialized: boolean) => void;
 }
@@ -103,17 +104,31 @@ export const useAuthStore = create<AuthState>()(
         console.log('🔄 AuthStore: Starting sign up process...');
         set({ isLoading: true, error: null });
         try {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-          });
+          const { data, error } = await sendEmailVerification(email, password);
 
           if (error) throw error;
 
           set({ isLoading: false });
-          console.log('✅ AuthStore: Sign up successful');
+          console.log('✅ AuthStore: Sign up successful, verification email sent');
         } catch (error: any) {
           console.error('❌ AuthStore: Sign up error:', error);
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
+      resetPassword: async (email: string) => {
+        console.log('🔄 AuthStore: Starting password reset...');
+        set({ isLoading: true, error: null });
+        try {
+          const { data, error } = await sendPasswordReset(email);
+
+          if (error) throw error;
+
+          set({ isLoading: false });
+          console.log('✅ AuthStore: Password reset email sent');
+        } catch (error: any) {
+          console.error('❌ AuthStore: Password reset error:', error);
           set({ error: error.message, isLoading: false });
           throw error;
         }

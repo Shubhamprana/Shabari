@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
@@ -9,31 +10,33 @@ import {
 } from 'react-native';
 import { theme } from '../theme';
 
-interface ActionButtonProps {
-  title: string;
-  subtitle?: string;
-  onPress: () => void;
-  color: string;
-  icon: string;
-  gradient?: boolean;
-  disabled?: boolean;
-  style?: 'traditional' | 'cyber' | 'premium';
-}
+// Define the specific screens the navigator can go to
+type ScreenName = 
+  | 'SMSScanner'
+  | 'SecureBrowser'
+  | 'Quarantine'
+  | 'LiveQRScanner'
+  | 'FeatureManagement'; // A catch-all for premium/other features
 
-interface ActionGridProps {
-  actions: ActionButtonProps[];
-  numColumns?: number;
+// Ensure the props for each button are strictly typed
+export interface ActionButtonProps {
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  label: string;
+  screen?: ScreenName;
+  description: string;
+  isPremium?: boolean; // Optional flag for premium features
+  isComingSoon?: boolean; // New flag for preview features
+  onPress?: () => void;
 }
 
 export const ActionButton: React.FC<ActionButtonProps> = ({
-  title,
-  subtitle,
-  onPress,
-  color,
   icon,
-  gradient = true,
-  disabled = false,
-  style = 'traditional',
+  label,
+  screen,
+  description,
+  isPremium = false,
+  isComingSoon = false,
+  onPress,
 }) => {
   const animatedValue = new Animated.Value(1);
 
@@ -56,15 +59,9 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   };
 
   const getGradientColors = (): [string, string] => {
-    if (color === theme.colors.primary) {
-      return [theme.colors.gradients.primary[0], theme.colors.gradients.primary[1]];
-    } else if (color === theme.colors.secondary) {
-      return [theme.colors.gradients.secondary[0], theme.colors.gradients.secondary[1]];
-    } else if (color === theme.colors.success) {
-      return [theme.colors.gradients.success[0], theme.colors.gradients.success[1]];
-    } else if (color === theme.colors.danger) {
-      return [theme.colors.gradients.danger[0], theme.colors.gradients.danger[1]];
-    } else if (color === theme.colors.warning) {
+    if (isComingSoon) {
+      return ['#FF6B6B', '#FF8E8E']; // Attractive coral gradient for coming soon
+    } else if (isPremium) {
       return [theme.colors.gradients.golden[0], theme.colors.gradients.golden[1]];
     } else {
       return [theme.colors.gradients.primary[0], theme.colors.gradients.primary[1]];
@@ -72,77 +69,151 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   };
 
   const getStyleVariant = () => {
-    switch (style) {
-      case 'cyber':
-        return styles.cyberCard;
-      case 'premium':
-        return styles.premiumCard;
-      default:
-        return styles.traditionalCard;
+    if (isComingSoon) {
+      return styles.comingSoonCard;
+    } else if (isPremium) {
+      return styles.premiumCard;
+    } else {
+      return styles.traditionalCard;
+    }
+  };
+
+  const getIconColor = () => {
+    if (isComingSoon) {
+      return '#FFFFFF';
+    } else if (isPremium) {
+      return theme.colors.text.primary;
+    } else {
+      return theme.colors.primary;
     }
   };
 
   return (
     <TouchableWithoutFeedback
-      onPress={disabled ? undefined : onPress}
+      onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      disabled={disabled}
     >
       <Animated.View
         style={[
           styles.actionButton,
           getStyleVariant(),
           { transform: [{ scale: animatedValue }] },
-          disabled && styles.disabledButton,
+          isComingSoon && { opacity: 0.95 }, // Make coming soon items slightly transparent
         ]}
       >
-        {gradient ? (
-          <LinearGradient
-            colors={getGradientColors()}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradientBackground}
-          >
-            <View style={styles.buttonContent}>
-              <View style={styles.iconContainer}>
-                <Text style={styles.buttonIcon}>{icon}</Text>
-                {style === 'traditional' && <View style={styles.mandalaPattern} />}
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.buttonTitle}>{title}</Text>
-                {subtitle && <Text style={styles.buttonSubtitle}>{subtitle}</Text>}
-              </View>
-              {style === 'cyber' && <View style={styles.cyberGlow} />}
+        <LinearGradient
+          colors={getGradientColors()}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientBackground}
+        >
+          <View style={styles.buttonContent}>
+            <View style={styles.iconContainer}>
+              <LinearGradient
+                colors={isComingSoon ? ['rgba(255, 255, 255, 0.2)', 'rgba(255, 255, 255, 0.1)'] : (isPremium ? ['#FFD700', '#FFA500'] : ['#FFFFFF', '#E0E0E0'])}
+                style={styles.iconBackground}
+              >
+                <MaterialCommunityIcons
+                  name={icon}
+                  size={36}
+                  color={getIconColor()}
+                />
+              </LinearGradient>
+              {isPremium && <View style={styles.mandalaPattern} />}
+              {isComingSoon && (
+                <View style={styles.comingSoonBadge}>
+                  <MaterialCommunityIcons name="rocket-launch" size={16} color="#FFFFFF" />
+                </View>
+              )}
             </View>
-          </LinearGradient>
-        ) : (
-          <View style={[styles.flatBackground, { backgroundColor: color }]}>
-            <View style={styles.buttonContent}>
-              <View style={styles.iconContainer}>
-                <Text style={styles.buttonIcon}>{icon}</Text>
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.buttonTitle}>{title}</Text>
-                {subtitle && <Text style={styles.buttonSubtitle}>{subtitle}</Text>}
-              </View>
+            <View style={styles.textContainer}>
+              <Text style={[
+                styles.buttonTitle,
+                isComingSoon && styles.comingSoonTitle
+              ]}>
+                {label}
+              </Text>
+              <Text style={[
+                styles.buttonSubtitle,
+                isComingSoon && styles.comingSoonSubtitle
+              ]}>
+                {description}
+              </Text>
             </View>
+            {isPremium && <View style={styles.cyberGlow} />}
           </View>
-        )}
+        </LinearGradient>
       </Animated.View>
     </TouchableWithoutFeedback>
   );
 };
 
+interface ActionGridProps {
+  actions: ActionButtonProps[];
+  numColumns?: number;
+  title?: string;
+  subtitle?: string;
+}
+
+// Core actions that are always available (for preview mode)
+const coreActions: ActionButtonProps[] = [
+  {
+    icon: 'file-document-outline',
+    label: 'Document Scanner',
+    screen: 'Quarantine',
+    description: 'AI-powered threat detection',
+  },
+  {
+    icon: 'link-variant',
+    label: 'Link Detection',
+    screen: 'SecureBrowser',
+    description: 'Real-time URL protection',
+  },
+  {
+    icon: 'qrcode-scan',
+    label: 'QR Scanner',
+    screen: 'LiveQRScanner',
+    description: 'Live fraud detection',
+  },
+];
+
+// Actions that are "Coming Soon" for non-premium users
+const previewActions: ActionButtonProps[] = [
+  {
+    icon: 'message-text-outline',
+    label: 'SMS Shield',
+    screen: 'SMSScanner',
+    description: 'Coming Soon - Enhanced Protection',
+    isComingSoon: true,
+  },
+  {
+    icon: 'web',
+    label: 'Secure Browser',
+    screen: 'SecureBrowser',
+    description: 'Coming Soon - Safe Browsing',
+    isComingSoon: true,
+  },
+  {
+    icon: 'robot-outline',
+    label: 'AI Guardian',
+    screen: 'FeatureManagement',
+    description: 'Coming Soon - Smart Defense',
+    isComingSoon: true,
+  },
+];
+
 export const ActionGrid: React.FC<ActionGridProps> = ({ 
   actions, 
-  numColumns = 2 
+  numColumns = 2,
+  title = "🛡️ Security Tools",
+  subtitle = "Advanced protection suite"
 }) => {
   return (
     <View style={styles.gridContainer}>
       <View style={styles.gridHeader}>
-        <Text style={styles.gridTitle}>🛡️ Cyber Arsenal</Text>
-        <Text style={styles.gridSubtitle}>Advanced security tools</Text>
+        <Text style={styles.gridTitle}>{title}</Text>
+        <Text style={styles.gridSubtitle}>{subtitle}</Text>
       </View>
       
       <View style={styles.grid}>
@@ -158,6 +229,8 @@ export const ActionGrid: React.FC<ActionGridProps> = ({
     </View>
   );
 };
+
+export { coreActions, previewActions };
 
 const styles = StyleSheet.create({
   gridContainer: {
@@ -208,28 +281,13 @@ const styles = StyleSheet.create({
     ...theme.shadows.glow,
   },
 
-  cyberCard: {
-    borderWidth: 1,
-    borderColor: theme.colors.border.primary,
-    ...theme.shadows.cyber,
-  },
-
   premiumCard: {
     borderWidth: 2,
     borderColor: theme.colors.text.gold,
     ...theme.shadows.colored,
   },
 
-  disabledButton: {
-    opacity: 0.5,
-  },
-
   gradientBackground: {
-    flex: 1,
-    borderRadius: theme.borderRadius.lg,
-  },
-
-  flatBackground: {
     flex: 1,
     borderRadius: theme.borderRadius.lg,
   },
@@ -247,6 +305,16 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  iconBackground: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.medium,
   },
 
   buttonIcon: {
@@ -294,6 +362,39 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
+  },
+
+  comingSoonCard: {
+    borderWidth: 2,
+    borderColor: theme.colors.border.accent,
+    ...theme.shadows.glow,
+  },
+
+  comingSoonBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 16,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+
+  comingSoonTitle: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+
+  comingSoonSubtitle: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
 

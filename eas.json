@@ -32,8 +32,7 @@
     },
     "playstore": {
       "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease",
+        "buildType": "app-bundle",
         "image": "latest",
         "node": "20.18.0",
         "cache": {
@@ -67,8 +66,7 @@
         "env": {
           "ANDROID_NDK_HOME": "/opt/android-sdk-linux/ndk/25.1.8937393",
           "NODE_ENV": "production",
-          "EXPO_PUBLIC_ENVIRONMENT": "production",
-          "EXPO_USE_COMMUNITY_AUTOLINKING": "1"
+          "EXPO_PUBLIC_ENVIRONMENT": "production"
         }
       }
     },

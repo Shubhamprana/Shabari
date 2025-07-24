@@ -51,14 +51,14 @@ export const PREMIUM_FEATURES: PremiumFeature[] = [
   },
   {
     id: 'otp_insight_pro',
-    name: 'OTP Insight Pro',
-    description: 'AI-powered SMS fraud detection with ML analysis',
+    name: 'SMS Shield (Manual)',
+    description: 'Manual SMS fraud detection with AI analysis (Play Store compliant)',
     category: 'analysis',
-    icon: '🧠',
+    icon: '🛡️',
     isSystemCritical: false,
-    requiresPermissions: ['READ_SMS', 'RECEIVE_SMS'],
-    batteryImpact: 'medium',
-    dataUsage: 'high'
+    requiresPermissions: ['READ_SMS'],
+    batteryImpact: 'low',
+    dataUsage: 'medium'
   },
   {
     id: 'ml_fraud_detection',
@@ -73,13 +73,13 @@ export const PREMIUM_FEATURES: PremiumFeature[] = [
   },
   {
     id: 'background_monitoring',
-    name: 'Background Monitoring',
-    description: 'Continuous security monitoring while app is closed',
+    name: 'Manual Security (Disabled)',
+    description: 'Background monitoring disabled for Play Store compliance',
     category: 'monitoring',
-    icon: '⚡',
-    isSystemCritical: true, // Critical for security
-    requiresPermissions: ['FOREGROUND_SERVICE', 'WAKE_LOCK'],
-    batteryImpact: 'high',
+    icon: '⏸️',
+    isSystemCritical: false,
+    requiresPermissions: [],
+    batteryImpact: 'low',
     dataUsage: 'low'
   },
   {

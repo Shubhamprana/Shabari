@@ -4,8 +4,8 @@ module.exports = {
       platforms: {
         android: {
           sourceDir: __dirname + '/react-native-yara-engine/android',
-          packageImportPath: 'import com.shabari.yara.YaraModule;',
-          packageInstance: 'new YaraModule()',
+          packageImportPath: 'import com.shabari.yara.YaraPackage;',
+          packageInstance: 'new YaraPackage()',
         },
       },
     },

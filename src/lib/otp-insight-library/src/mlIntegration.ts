@@ -242,7 +242,7 @@ export class MLIntegrationService {
       analysis.score -= 0.8; // Very strong reduction for multiple legitimate patterns
     } else if (legitimatePatternCount === 1) {
       analysis.score -= 0.4; // Strong reduction for single legitimate pattern
-    }
+      }
 
     // If message has legitimate banking patterns, be very conservative
     const hasStrongLegitimateContext = analysis.legitimateFlags.length > 0;

@@ -104,86 +104,29 @@ export class NativeFileScanner {
 
   async scanDirectory(directoryPath: string, 
                      onProgress?: (progress: ScanProgress) => void): Promise<FileScanResult[]> {
-    if (this.scanInProgress) {
-      throw new Error('Another scan is already in progress');
-    }
-
-    this.scanInProgress = true;
-    const results: FileScanResult[] = [];
-    let filesScanned = 0;
-    let threats = 0;
-
-    try {
-      await this.initialize();
-
-      console.log('🔍 Starting directory scan:', directoryPath);
-
-      // Get all files in directory recursively
-      const allFiles = await this.getAllFilesRecursively(directoryPath);
-      const totalFiles = allFiles.length;
-
-      console.log(`📁 Found ${totalFiles} files to scan`);
-
-      for (const filePath of allFiles) {
-        try {
+    // COMPLIANCE: Directory scanning disabled for Play Store compliance
+    console.log('🔒 NativeFileScanner: Directory scanning disabled for Play Store compliance');
+    console.log('🔒 Scoped storage policies prevent recursive directory access');
+    console.log('🔒 Use individual file scanning instead (user-initiated only)');
+    
           if (onProgress) {
             onProgress({
-              currentFile: filePath,
-              filesScanned,
-              totalFiles,
-              threats
-            });
-          }
-
-          const result = await this.scanFile(filePath);
-          results.push(result);
-          filesScanned++;
-
-          if (!result.isSafe) {
-            threats++;
-            console.log(`⚠️ Threat detected: ${result.threatName} in ${filePath}`);
-          }
-
-        } catch (error) {
-          console.error(`❌ Error scanning ${filePath}:`, error);
-          // Continue with other files
-        }
-      }
-
-      console.log(`✅ Directory scan completed: ${filesScanned} files, ${threats} threats`);
-      return results;
-
-    } finally {
-      this.scanInProgress = false;
+        currentFile: 'Compliance mode - directory scanning disabled',
+        filesScanned: 0,
+        totalFiles: 0,
+        threats: 0
+      });
     }
+    
+    return [];
   }
 
   private async getAllFilesRecursively(directoryPath: string): Promise<string[]> {
-    const files: string[] = [];
+    // COMPLIANCE: Recursive directory scanning disabled for Play Store compliance
+    console.log('🔒 NativeFileScanner: Recursive directory scanning disabled for Play Store compliance');
+    console.log('🔒 Scoped storage policies prevent deep directory traversal');
     
-    try {
-      const entries = await FileSystem.readDirectoryAsync(directoryPath);
-      
-      for (const entry of entries) {
-        const fullPath = `${directoryPath}/${entry}`;
-        const info = await FileSystem.getInfoAsync(fullPath);
-        
-        if (info.exists) {
-          if (info.isDirectory) {
-            // Recursively scan subdirectory
-            const subFiles = await this.getAllFilesRecursively(fullPath);
-            files.push(...subFiles);
-          } else {
-            // Add file to scan list
-            files.push(fullPath);
-          }
-        }
-      }
-    } catch (error) {
-      console.error(`Error reading directory ${directoryPath}:`, error);
-    }
-    
-    return files;
+    return [];
   }
 
   private async performAdditionalSecurityChecks(filePath: string, fileInfo: any): Promise<{

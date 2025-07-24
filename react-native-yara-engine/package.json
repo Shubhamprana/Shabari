@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "YARA malware detection engine for React Native",
   "main": "index.js",
+  "types": "index.d.ts",
+  "expo": {
+    "plugin": "./app.plugin.js"
+  },
   "scripts": {
     "build": "react-native run-android",
     "test": "jest",
@@ -40,6 +44,7 @@
     "android/",
     "index.js",
     "index.d.ts",
+    "app.plugin.js",
     "README.md",
     "LICENSE"
   ]

@@ -1,23 +1,27 @@
 import { NavigationContainer } from '@react-navigation/native';
 import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Import stores
 import { useSubscriptionStore } from './src/stores/subscriptionStore';
 
 // Import services with error handling
-import { autoInitService } from './src/services/AutoInitializationService';
 import { ClipboardMonitorCallbacks, clipboardMonitor } from './src/services/ClipboardURLMonitor';
 import { globalGuard } from './src/services/GlobalGuardController';
-import { PrivacyGuardCallbacks, privacyGuardService } from './src/services/PrivacyGuardService';
+import { PrivacyGuardCallbacks } from './src/services/PrivacyGuardService';
 import { LinkScannerService } from './src/services/ScannerService';
 import { ShareIntentCallbacks, shareIntentService, useShabariShareIntent } from './src/services/ShareIntentService';
 import { URLProtectionCallbacks, urlProtectionService } from './src/services/URLProtectionService';
-import { WatchdogCallbacks, watchdogFileService } from './src/services/WatchdogFileService';
+import { WatchdogCallbacks } from './src/services/WatchdogFileService';
 
 // Import screens
+import { supabase } from './src/lib/supabase';
 import AppNavigator from './src/navigation/AppNavigator';
+import LoginScreen from './src/screens/LoginScreen';
+import { useAuthStore } from './src/stores/authStore';
 
 // Check if running in Expo Go
 const isExpoGo = Constants.appOwnership === 'expo';
@@ -44,6 +48,18 @@ const linking = {
     },
   },
 };
+
+// Configure notifications
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
+// Deep link prefix configuration
+const prefix = 'shabari://';
 
 // Enhanced URL handler function with automatic interception
 async function handleIncomingURL(url: string) {
@@ -166,10 +182,9 @@ async function handleIncomingURL(url: string) {
   }
 }
 
-export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+const App: React.FC = () => {
+  const { isAuthenticated, isLoading, sessionInitialized, checkAuth } = useAuthStore();
+  const [isInitializing, setIsInitializing] = useState(true);
   const [servicesStatus, setServicesStatus] = useState<ServiceStatus>({
     scannerService: false,
     shareIntentService: false,
@@ -220,13 +235,84 @@ export default function App() {
   console.log('📱 Share Intent Status:', shareIntentStatus);
 
   useEffect(() => {
-    initializeApp();
-    
-    // Cleanup function
-    return () => {
-      cleanup();
+    const initializeApp = async () => {
+      try {
+        console.log('🚀 App: Starting initialization...');
+        
+        // Check existing authentication
+        await checkAuth();
+        
+        // Handle deep links
+        const handleDeepLink = async (url: string) => {
+          console.log('🔗 Deep link received:', url);
+          
+          // Handle auth callbacks
+          if (url.includes('/auth/callback') || url.includes('/auth/reset-password')) {
+            try {
+              const { data, error } = await supabase.auth.getSession();
+              
+              if (error) {
+                console.error('❌ Auth callback error:', error);
+                Alert.alert('Authentication Error', 'Failed to process authentication. Please try again.');
+                return;
+              }
+              
+              if (data.session) {
+                console.log('✅ Authentication successful from deep link');
+                
+                // Check if this is email verification
+                if (url.includes('/auth/callback')) {
+                  Alert.alert(
+                    'Email Verified! ✅',
+                    'Your email has been successfully verified. You can now sign in to your account.',
+                    [{ text: 'OK' }]
+                  );
+                }
+                
+                // Check if this is password reset
+                if (url.includes('/auth/reset-password')) {
+                  Alert.alert(
+                    'Password Reset Ready',
+                    'You can now set a new password for your account.',
+                    [{ text: 'Continue' }]
+                  );
+                }
+                
+                // Refresh auth state
+                await checkAuth();
+              }
+            } catch (authError) {
+              console.error('❌ Deep link auth error:', authError);
+              Alert.alert('Error', 'Failed to process authentication link.');
+            }
+          }
+        };
+
+        // Handle initial URL (app opened from link)
+        const initialUrl = await Linking.getInitialURL();
+        if (initialUrl) {
+          await handleDeepLink(initialUrl);
+        }
+
+        // Listen for URL changes (app already open)
+        const subscription = Linking.addEventListener('url', ({ url }) => {
+          handleDeepLink(url);
+        });
+
+        console.log('✅ App: Initialization complete');
+        setIsInitializing(false);
+
+        return () => {
+          subscription?.remove();
+        };
+      } catch (error) {
+        console.error('❌ App initialization error:', error);
+        setIsInitializing(false);
+      }
     };
-  }, []);
+
+    initializeApp();
+  }, [checkAuth]);
 
   // Enhanced URL handling for different platforms
   useEffect(() => {
@@ -258,59 +344,6 @@ export default function App() {
 
     setupURLHandling();
   }, []);
-
-  const initializeApp = async () => {
-    try {
-      console.log('🚀 Initializing Shabari App...');
-      
-      // Add timeout to prevent hanging
-      const initializationTimeout = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Initialization timeout after 8 seconds')), 8000);
-      });
-
-      const initializationProcess = async () => {
-        // Initialize subscription store first
-        await initializeSubscriptionStore();
-        
-        // Start automatic initialization of all security features
-        console.log('🚀 Starting auto-initialization service...');
-        await autoInitService.startAutoInitialization();
-        
-        // Initialize all services with error handling
-        await initializeServices();
-      };
-
-      // Race between initialization and timeout
-      await Promise.race([initializationProcess(), initializationTimeout]);
-      
-      console.log('✅ App initialization completed');
-      setIsLoading(false);
-      
-    } catch (error) {
-      console.error('❌ App initialization failed:', error);
-      
-      setErrorMessage(`Initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setHasError(true);
-      
-      // Show user-friendly error but continue anyway after a short delay
-      setTimeout(() => {
-        console.log('🔄 Continuing with basic functionality...');
-        setHasError(false);
-        setIsLoading(false);
-      }, 3000);
-    }
-  };
-
-  const initializeSubscriptionStore = async (): Promise<void> => {
-    try {
-      console.log('📦 Loading subscription data...');
-      await checkSubscriptionStatus();
-      console.log('✅ Subscription store initialized');
-    } catch (error) {
-      console.error('❌ Subscription store initialization failed:', error);
-      // Continue anyway - subscription will default to free
-    }
-  };
 
   const initializeServices = async (): Promise<void> => {
     const status: ServiceStatus = {
@@ -478,11 +511,11 @@ export default function App() {
       const result = await initializeWithTimeout(
         async () => {
           clipboardMonitor.initialize(clipboardCallbacks);
-          clipboardMonitor.startMonitoring();
+          // clipboardMonitor.startMonitoring(); // 🚨 PLAY STORE COMPLIANCE: Disabled automatic startup
           return clipboardMonitor.isServiceInitialized();
         },
         'Clipboard Monitor Service',
-        8000 // Increased timeout for EAS builds
+        3000
       );
       
       status.clipboardMonitor = result === true;
@@ -503,12 +536,11 @@ export default function App() {
       
       const result = await initializeWithTimeout(
         async () => {
-          // Properly initialize GlobalGuard
-          await globalGuard.waitForInitialization();
+          // await globalGuard.waitForInitialization(); // 🚨 PLAY STORE COMPLIANCE: Disabled automatic startup
           return globalGuard.isServiceInitialized();
         },
         'Global Guard Service',
-        10000 // Increased timeout for EAS builds
+        7000
       );
       
       status.globalGuardService = result === true;
@@ -588,12 +620,11 @@ export default function App() {
       
       const result = await initializeWithTimeout(
         async () => {
-          await watchdogFileService.initialize(watchdogCallbacks);
-          await watchdogFileService.startWatching();
-          return watchdogFileService.getServiceStatus().isInitialized;
+          // await watchdogFileService.startWatching(); // 🚨 PLAY STORE COMPLIANCE: Disabled automatic startup
+          return false;
         },
         'Watchdog File Service',
-        2000
+        10000
       );
       
       status.watchdogFileService = result === true;
@@ -635,12 +666,11 @@ export default function App() {
       
       const result = await initializeWithTimeout(
         async () => {
-          await privacyGuardService.initialize(privacyGuardCallbacks);
-          await privacyGuardService.startMonitoring();
-          return privacyGuardService.getServiceStatus().isInitialized;
+          // await privacyGuardService.startMonitoring(); // 🚨 PLAY STORE COMPLIANCE: Disabled automatic startup
+          return false;
         },
         'Privacy Guard Service',
-        2000
+        10000
       );
       
       status.privacyGuardService = result === true;
@@ -669,84 +699,64 @@ export default function App() {
     });
   };
 
-  const cleanup = () => {
-    try {
-      console.log('🧹 Cleaning up services...');
-      
-      // Cleanup Share Intent Service
-      if (shareIntentService.isServiceInitialized()) {
-        shareIntentService.cleanup();
-      }
-      
-      // Cleanup Global Guard Service
-      if (globalGuard.isServiceInitialized()) {
-        globalGuard.cleanup();
-      }
-      
-      // Cleanup Clipboard Monitor Service
-      if (clipboardMonitor.isServiceInitialized()) {
-        clipboardMonitor.cleanup();
-      }
-      
-      // Cleanup URL Protection Service
-      if (urlProtectionService.isServiceInitialized()) {
-        urlProtectionService.cleanup();
-      }
-      
-      // Cleanup Watchdog File Service
-      if (watchdogFileService.getServiceStatus().isInitialized) {
-        watchdogFileService.cleanup();
-      }
-      
-      // Cleanup Privacy Guard Service
-      if (privacyGuardService.getServiceStatus().isInitialized) {
-        privacyGuardService.cleanup();
-      }
-      
-      console.log('✅ Service cleanup completed');
-    } catch (error) {
-      console.error('❌ Service cleanup failed:', error);
-    }
-  };
-
-  // Error screen
-  if (hasError) {
+  // Show loading screen during initialization
+  if (isInitializing || !sessionInitialized) {
     return (
-      <View style={styles.errorContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#ff6b6b" />
-        <Text style={styles.errorTitle}>⚠️ Initialization Error</Text>
-        <Text style={styles.errorMessage}>{errorMessage}</Text>
-        <Text style={styles.errorSubtext}>
-          The app will continue with limited functionality.
-        </Text>
-      </View>
-    );
-  }
-
-  // Loading screen
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaProvider>
         <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
-        <Text style={styles.loadingTitle}>🛡️ Shabari</Text>
-        <Text style={styles.loadingText}>Initializing security services...</Text>
-        <View style={styles.loadingDots}>
-          <Text style={styles.loadingDot}>●</Text>
-          <Text style={styles.loadingDot}>●</Text>
-          <Text style={styles.loadingDot}>●</Text>
+        <View style={{ 
+          flex: 1, 
+          backgroundColor: '#1a1a2e', 
+          justifyContent: 'center', 
+          alignItems: 'center' 
+        }}>
+          <ActivityIndicator size="large" color="#ff6b6b" />
+          <Text style={{ 
+            color: '#ffffff', 
+            marginTop: 20, 
+            fontSize: 16 
+          }}>
+            Initializing Shabari...
+          </Text>
         </View>
-      </View>
+      </SafeAreaProvider>
     );
   }
 
-  // Main app
   return (
-    <NavigationContainer linking={linking}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+    <SafeAreaProvider>
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
+      
+      {/* Show login screen if not authenticated */}
+      {!isAuthenticated ? (
+        <LoginScreen onLoginSuccess={() => {
+          console.log('✅ App: Login success callback received');
+        }} />
+      ) : (
+        <NavigationContainer
+          linking={{
+            prefixes: [prefix, 'shabari://'],
+            config: {
+              screens: {
+                Dashboard: 'dashboard',
+                Scanner: 'scanner',
+                QRScanner: 'qr-scanner',
+                Settings: 'settings',
+                // Auth screens
+                AuthCallback: 'auth/callback',
+                ResetPassword: 'auth/reset-password',
+              },
+            },
+          }}
+        >
       <AppNavigator />
     </NavigationContainer>
+      )}
+    </SafeAreaProvider>
   );
-}
+};
+
+export default App;
 
 const styles = StyleSheet.create({
   container: {

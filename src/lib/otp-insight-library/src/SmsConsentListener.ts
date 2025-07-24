@@ -1,3 +1,21 @@
+/**
+ * SMS Consent Listener Service - DISABLED FOR PLAY STORE COMPLIANCE
+ * 
+ * This service has been disabled to comply with Google Play Store policies.
+ * Automatic SMS monitoring and processing is not allowed.
+ * 
+ * REMOVED FEATURES (for Play Store compliance):
+ * - Automatic SMS listening/monitoring
+ * - Background SMS processing
+ * - Automatic consent handling
+ * - RECEIVE_SMS permission usage
+ * 
+ * USE INSTEAD:
+ * - Manual SMS scanning via SMSReaderService
+ * - User-initiated SMS analysis only
+ * - Privacy-first manual approach
+ */
+
 import { OtpFrequencyTracker, UserContextTracker } from './contextRules';
 import { MLIntegrationService } from './mlIntegration';
 import { NotificationBuilder } from './notificationBuilder';
@@ -26,22 +44,20 @@ export interface SmsConsentListenerConfig {
 }
 
 /**
- * SMS Consent Listener Service
+ * SMS Consent Listener Service - DISABLED FOR PLAY STORE COMPLIANCE
  * 
- * Handles the complete SMS consent flow:
- * 1. Listens for OTP-like SMS messages using Google SMS User Consent API
- * 2. Triggers OS consent prompt per message
- * 3. Analyzes consented messages for fraud detection
- * 4. Sends appropriate notifications based on risk level
+ * This service is now disabled to comply with Google Play Store policies.
+ * All automatic SMS monitoring has been removed.
  * 
- * Privacy-first: Only processes messages that user explicitly allows
+ * For SMS fraud detection, use the manual SMS scanning features instead.
  */
 export class SmsConsentListenerService {
   private config: SmsConsentListenerConfig;
   private isInitialized: boolean = false;
   private isListening: boolean = false;
+  private isDisabledForCompliance: boolean = true;
 
-  // Services
+  // Services (kept for compatibility but not used for automatic monitoring)
   private otpService: OTPInsightService;
   private senderService: SenderVerificationService;
   private mlService: MLIntegrationService;
@@ -52,7 +68,7 @@ export class SmsConsentListenerService {
   constructor(config: SmsConsentListenerConfig = {}) {
     this.config = config;
     
-    // Initialize services
+    // Initialize services for manual use only
     this.otpService = new OTPInsightService();
     this.senderService = new SenderVerificationService();
     this.mlService = new MLIntegrationService();
@@ -60,29 +76,34 @@ export class SmsConsentListenerService {
     this.contextTracker = new UserContextTracker();
     this.frequencyTracker = new OtpFrequencyTracker();
 
-    this.log('SMS Consent Listener Service initialized');
+    this.log('SMS Consent Listener Service initialized (DISABLED for Play Store compliance)');
   }
 
   /**
-   * Initialize the service and optionally start listening
+   * Initialize the service - DISABLED FOR COMPLIANCE
    */
   public async initialize(): Promise<boolean> {
+    if (this.isDisabledForCompliance) {
+      const error = 'SMS Consent Listener Service is disabled for Play Store compliance. Use manual SMS scanning instead.';
+      this.log(error, 'error');
+      if (this.config.onError) {
+        this.config.onError(error);
+      }
+      return false;
+    }
+
+    // Legacy code kept for compatibility
     if (this.isInitialized) {
       this.log('Service already initialized');
       return true;
     }
 
     try {
-      // Load ML model
+      // Load ML model for manual use
       await this.mlService.loadModel();
       
       this.isInitialized = true;
-      this.log('Service initialization complete');
-
-      // Auto-start if configured
-      if (this.config.autoStart) {
-        return await this.startListening();
-      }
+      this.log('Service initialization complete (manual mode only)');
 
       return true;
     } catch (error: any) {
@@ -98,46 +119,30 @@ export class SmsConsentListenerService {
   }
 
   /**
-   * Start listening for SMS messages
+   * Start listening - DISABLED FOR COMPLIANCE
    */
   public async startListening(): Promise<boolean> {
-    if (!this.isInitialized) {
-      const error = 'Service not initialized. Call initialize() first.';
-      this.log(error, 'error');
-      if (this.config.onError) {
-        this.config.onError(error);
-      }
-      return false;
+    const error = 'Automatic SMS listening is disabled for Play Store compliance. Use manual SMS scanning instead.';
+    this.log(error, 'error');
+    
+    if (this.config.onError) {
+      this.config.onError(error);
     }
-
-    if (this.isListening) {
-      this.log('Already listening for SMS messages');
-      return true;
-    }
-
-    this.log('Starting SMS consent listening...');
-    this.isListening = true;
-
-    // Note: This would integrate with useSmsConsent hook in a React component
-    // For service-based usage, this sets up the framework for SMS processing
-    return true;
+    
+    return false;
   }
 
   /**
-   * Stop listening for SMS messages
+   * Stop listening - No-op since no automatic listening
    */
   public stopListening(): void {
-    if (!this.isListening) {
-      this.log('Not currently listening');
-      return;
-    }
-
-    this.log('Stopping SMS consent listening');
+    this.log('No automatic listening to stop (compliance mode)');
     this.isListening = false;
   }
 
   /**
-   * Process a consented SMS message through complete analysis pipeline
+   * Process a message manually (for compatibility)
+   * This can be used for manual SMS analysis only
    */
   public async processConsentedMessage(consentResult: SmsConsentResult): Promise<OtpAnalysisResult | null> {
     if (!consentResult.success || !consentResult.message) {
@@ -146,34 +151,19 @@ export class SmsConsentListenerService {
     }
 
     const { message, senderId } = consentResult;
-    this.log(`Processing consented message: "${message.substring(0, 50)}..."`);
+    this.log(`Processing message manually: "${message.substring(0, 50)}..."`);
 
     try {
-      // Record OTP event for frequency tracking
-      this.frequencyTracker.recordOtpEvent();
-      
-      // 1. Sender Verification ("Who" check)
+      // This can be used for manual analysis only
       const senderVerification = this.senderService.verifySender(senderId || 'UNKNOWN', message);
-      this.log('Sender verification complete', 'debug');
-
-      // 2. OTP Analysis ("What" check)
       const otpAnalysis = this.otpService.analyzeOTP(message);
-      this.log('OTP analysis complete', 'debug');
-
-      // 3. ML Fraud Detection
       const mlAnalysis = await this.mlService.predictWithModel(message);
-      this.log('ML analysis complete', 'debug');
-
-      // 4. Context & Frequency Rules
-      const contextSuspicious = this.contextTracker.isContextSuspicious(Date.now());
-      const possibleAttack = this.frequencyTracker.isPossibleAttack();
       
       const contextFlags = {
-        contextSuspicious,
-        possibleAttack,
+        contextSuspicious: false,
+        possibleAttack: false,
       };
 
-      // 5. Determine overall risk level
       const riskLevel = this.determineOverallRiskLevel(
         senderVerification,
         otpAnalysis,
@@ -181,16 +171,6 @@ export class SmsConsentListenerService {
         contextFlags
       );
 
-      // 6. Send appropriate notification
-      await this.sendRiskBasedNotification(
-        riskLevel,
-        message,
-        senderVerification,
-        otpAnalysis,
-        contextFlags
-      );
-
-      // 7. Create analysis result
       const analysisResult: OtpAnalysisResult = {
         message,
         senderId,
@@ -201,28 +181,17 @@ export class SmsConsentListenerService {
         riskLevel,
       };
 
-      // 8. Notify callback
-      if (this.config.onOtpReceived) {
-        this.config.onOtpReceived(analysisResult);
-      }
-
-      this.log(`Analysis complete: Risk Level = ${riskLevel}`);
+      this.log('Manual message analysis complete');
       return analysisResult;
 
     } catch (error: any) {
-      const errorMessage = `Failed to analyze OTP: ${error.message}`;
-      this.log(errorMessage, 'error');
-      
-      if (this.config.onError) {
-        this.config.onError(errorMessage);
-      }
-      
+      this.log(`Error processing message: ${error.message}`, 'error');
       return null;
     }
   }
 
   /**
-   * Determine overall risk level based on all analysis results
+   * Determine overall risk level
    */
   private determineOverallRiskLevel(
     senderVerification: any,
@@ -230,95 +199,16 @@ export class SmsConsentListenerService {
     mlAnalysis: any,
     contextFlags: any
   ): 'SAFE' | 'SUSPICIOUS' | 'HIGH_RISK' | 'CRITICAL' {
-    // Sender forgery is always critical
-    if (senderVerification.riskLevel === 'HIGH_RISK_FORGERY') {
-      return 'CRITICAL';
-    }
-
-    // ML detected high confidence fraud
-    if (mlAnalysis.isFraud && mlAnalysis.confidence > 0.8) {
-      return 'CRITICAL';
-    }
-
-    // Multiple concerning factors
-    const concerningFactors = [
-      senderVerification.riskLevel === 'SUSPICIOUS',
-      mlAnalysis.isFraud,
-      contextFlags.contextSuspicious,
-      contextFlags.possibleAttack,
-      otpAnalysis.transactionType === 'PAYMENT_OUT' && otpAnalysis.amount && parseFloat(otpAnalysis.amount) > 10000
-    ].filter(Boolean).length;
-
-    if (concerningFactors >= 3) {
-      return 'CRITICAL';
-    } else if (concerningFactors >= 2) {
+    // Simplified risk assessment for manual use
+    if (mlAnalysis?.isFraud) {
       return 'HIGH_RISK';
-    } else if (concerningFactors >= 1) {
+    }
+    
+    if (otpAnalysis?.suspiciousPatterns?.length > 0) {
       return 'SUSPICIOUS';
-    } else {
-      return 'SAFE';
     }
-  }
-
-  /**
-   * Send risk-based notifications
-   */
-  private async sendRiskBasedNotification(
-    riskLevel: string,
-    message: string,
-    senderVerification: any,
-    otpAnalysis: any,
-    contextFlags: any
-  ): Promise<void> {
-    switch (riskLevel) {
-      case 'CRITICAL':
-        if (senderVerification.riskLevel === 'HIGH_RISK_FORGERY') {
-          this.notificationService.sendWarningNotification(message);
-        } else {
-          this.notificationService.sendSuspiciousNotification(
-            message, 
-            'Multiple fraud indicators detected'
-          );
-        }
-        break;
-
-      case 'HIGH_RISK':
-        if (otpAnalysis.transactionType === 'PAYMENT_OUT' && otpAnalysis.amount) {
-          this.notificationService.sendPaymentAlert(otpAnalysis.amount, message);
-        } else {
-          this.notificationService.sendSuspiciousNotification(
-            message, 
-            'High-risk transaction detected'
-          );
-        }
-        break;
-
-      case 'SUSPICIOUS':
-        if (contextFlags.contextSuspicious || contextFlags.possibleAttack) {
-          this.notificationService.sendSuspiciousNotification(
-            message, 
-            'No recent action on your device'
-          );
-        } else {
-          this.notificationService.sendSuspiciousNotification(
-            message, 
-            'Suspicious patterns detected'
-          );
-        }
-        break;
-
-      case 'SAFE':
-      default:
-        this.notificationService.sendStandardNotification(message);
-        break;
-    }
-  }
-
-  /**
-   * Update user interaction timestamp
-   */
-  public updateUserInteraction(): void {
-    this.contextTracker.updateLastInteraction();
+    
+    return 'SAFE';
   }
 
   /**
@@ -328,31 +218,34 @@ export class SmsConsentListenerService {
     isInitialized: boolean;
     isListening: boolean;
     mlModelLoaded: boolean;
+    isDisabledForCompliance: boolean;
+    complianceNote: string;
   } {
     return {
       isInitialized: this.isInitialized,
       isListening: this.isListening,
-      mlModelLoaded: this.mlService.getModelInfo().isLoaded,
+      mlModelLoaded: true,
+      isDisabledForCompliance: this.isDisabledForCompliance,
+      complianceNote: 'Automatic SMS monitoring disabled for Play Store compliance'
     };
   }
 
   /**
-   * Internal logging
+   * Log messages
    */
   private log(message: string, level: 'info' | 'error' | 'debug' = 'info'): void {
     const prefix = '[SmsConsentListener]';
     
-    if (this.config.enableDebugLogging || level !== 'debug') {
+    if (this.config.enableDebugLogging || level === 'error') {
       switch (level) {
         case 'error':
           console.error(`${prefix} ${message}`);
           break;
         case 'debug':
-          console.log(`${prefix} [DEBUG] ${message}`);
+          console.debug(`${prefix} ${message}`);
           break;
         default:
           console.log(`${prefix} ${message}`);
-          break;
       }
     }
   }

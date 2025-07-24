@@ -208,6 +208,47 @@ export class ClipboardURLMonitor {
     }
   }
 
+  public async scanClipboardManually(): Promise<{ status: 'scanned' | 'not_a_url' | 'error', result?: UrlScanResult, message?: string, url?: string }> {
+    if (!Clipboard) {
+      return { status: 'error', message: 'Clipboard not available.' };
+    }
+
+    try {
+      const clipboardContent = await Clipboard.getString();
+      
+      if (clipboardContent && this.isUrl(clipboardContent)) {
+        this.lastCheckedContent = clipboardContent;
+        console.log('📋 Manually scanning URL from clipboard:', clipboardContent);
+        
+        let normalizedUrl = clipboardContent.trim();
+        if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+          normalizedUrl = 'https://' + normalizedUrl;
+        }
+
+        await LinkScannerService.initializeService();
+        const scanResult: UrlScanResult = await LinkScannerService.scanUrl(normalizedUrl);
+
+        if (this.callbacks) {
+          this.callbacks.onScanComplete({
+            url: normalizedUrl,
+            isSafe: scanResult.isSafe,
+            details: scanResult.details,
+          });
+        }
+        return { status: 'scanned', result: scanResult, url: normalizedUrl };
+
+      } else {
+        return { status: 'not_a_url', message: 'No URL found in the clipboard.' };
+      }
+    } catch (error) {
+      console.error('📋 Error during manual clipboard scan:', error);
+      if (this.callbacks) {
+        this.callbacks.onError('Failed to scan clipboard');
+      }
+      return { status: 'error', message: 'An error occurred during the scan.' };
+    }
+  }
+
   public cleanup(): void {
     try {
       this.stopMonitoring();

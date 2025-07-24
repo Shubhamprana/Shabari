@@ -53,6 +53,14 @@
             margin: 20px 0;
             border-left: 5px solid #138808;
         }
+        .playstore-compliance {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #0984e3;
+        }
         ul {
             padding-left: 25px;
         }
@@ -84,6 +92,13 @@
             font-weight: bold;
             margin: 0 5px;
         }
+        .permission-box {
+            background: #f1f3f4;
+            border: 2px solid #FF4500;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
@@ -92,213 +107,328 @@
         <div class="subtitle">
             <span class="app-badge">शबरी</span> Cybersecurity App - Your Digital Guardian
         </div>
-        <div class="last-updated">Last Updated: January 15, 2024</div>
+        <div class="last-updated">Last Updated: January 15, 2025</div>
+
+        <div class="playstore-compliance">
+            <h3><span class="emoji">🏪</span> Google Play Store Data Safety Declaration</h3>
+            <p><strong>This privacy policy complies with Google Play Store requirements and accurately describes our data practices for the Data Safety section:</strong></p>
+            <ul>
+                <li><strong>SMS Data:</strong> Manual scanning only - Never automatic collection</li>
+                <li><strong>File Data:</strong> User-selected files only - Processed locally on device</li>
+                <li><strong>Camera Data:</strong> QR code scanning only - No storage or transmission</li>
+                <li><strong>Personal Data:</strong> Email for authentication only</li>
+                <li><strong>Data Sharing:</strong> No personal data shared with third parties</li>
+            </ul>
+        </div>
 
         <div class="highlight">
             <h3><span class="emoji">🔒</span> Privacy-First Promise</h3>
-            <p><strong>Shabari is built with privacy-by-design.</strong> All security analysis happens locally on your device. We collect minimal data and never share your personal information with third parties.</p>
+            <p><strong>Shabari is a manual security toolkit.</strong> You are in complete control. The app only scans what you explicitly choose to scan. We do not perform any automatic background scanning or data collection. We collect the absolute minimum data necessary for the app to function and never sell your data to anyone.</p>
         </div>
 
         <h2><span class="emoji">👨‍💻</span> Developer Information</h2>
         <div class="contact-info">
             <p><strong>Developer:</strong> Shubham Prajapati</p>
             <p><strong>App Name:</strong> Shabari Cybersecurity (शबरी)</p>
-            <p><strong>Contact Email:</strong> support@shabari-app.com</p>
-            <p><strong>Privacy Contact:</strong> privacy@shabari-app.com</p>
+            <p><strong>Contact Email:</strong> mrdrsp2@gmail.com</p>
+            <p><strong>Privacy Contact:</strong> mrdrsp2@gmail.com</p>
             <p><strong>Google Play Store:</strong> Published by Shubham Prajapati</p>
+            <p><strong>Location:</strong> India</p>
         </div>
 
-        <h2><span class="emoji">🔍</span> Data We Collect</h2>
-        <p>Shabari follows a <strong>minimal data collection</strong> approach. We only collect data that is absolutely necessary for app functionality:</p>
+        <h2><span class="emoji">📱</span> Android Permissions Explained</h2>
+        <p>Shabari requests only essential permissions required for security functionality. Here's exactly how each permission is used:</p>
         
-        <h3>Account Information (Required)</h3>
+        <div class="permission-box">
+            <h3><span class="emoji">📧</span> READ_SMS Permission - Manual SMS Security Scanning</h3>
+            <p><strong>Purpose:</strong> Allows manual scanning of SMS messages for fraud detection when YOU choose to scan them.</p>
+            <p><strong>How it's used:</strong></p>
+            <ul>
+                <li>✅ <strong>Manual Only:</strong> Only reads SMS when you tap "Scan Messages" in the app</li>
+                <li>✅ <strong>User Selection:</strong> You select which specific messages to analyze</li>
+                <li>✅ <strong>Local Processing:</strong> Analysis happens entirely on your device</li>
+                <li>✅ <strong>No Storage:</strong> Messages are analyzed in real-time and not stored</li>
+                <li>✅ <strong>No Transmission:</strong> SMS content never leaves your device</li>
+                <li>✅ <strong>Detection Focus:</strong> Identifies phishing links, OTP fraud, scam patterns</li>
+            </ul>
+            <p><strong>What we DON'T do:</strong></p>
+            <ul>
+                <li>❌ No automatic background reading of messages</li>
+                <li>❌ No bulk collection or storage of SMS data</li>
+                <li>❌ No transmission of message content to servers</li>
+                <li>❌ No monitoring of incoming messages</li>
+            </ul>
+        </div>
+
+        <div class="permission-box">
+            <h3><span class="emoji">📷</span> CAMERA Permission - QR Code Security Scanning</h3>
+            <p><strong>Purpose:</strong> Scan QR codes to detect malicious links and fraudulent codes.</p>
+            <p><strong>How it's used:</strong></p>
+            <ul>
+                <li>✅ Only when you open the QR scanner feature</li>
+                <li>✅ Analyzes QR code content for security threats</li>
+                <li>✅ No photos or videos are stored</li>
+                <li>✅ Camera access stops when you close the scanner</li>
+            </ul>
+        </div>
+
+        <div class="permission-box">
+            <h3><span class="emoji">📁</span> STORAGE Permissions - Manual File Security Scanning</h3>
+            <p><strong>Purpose:</strong> Scan files you manually select for malware and threats.</p>
+            <p><strong>How it's used:</strong></p>
+            <ul>
+                <li>✅ Only accesses files when you select "Scan File" or "Share to Shabari"</li>
+                <li>✅ Analyzes selected files for security threats</li>
+                <li>✅ File content processed locally on your device</li>
+                <li>✅ No automatic scanning of your file system</li>
+            </ul>
+        </div>
+
+        <div class="permission-box">
+            <h3><span class="emoji">🌐</span> INTERNET & NETWORK Permissions - Security Database Lookups</h3>
+            <p><strong>Purpose:</strong> Check URLs and file signatures against security databases.</p>
+            <p><strong>How it's used:</strong></p>
+            <ul>
+                <li>✅ Verify suspicious URLs with Google Safe Browsing</li>
+                <li>✅ Check file hashes (not content) with VirusTotal</li>
+                <li>✅ Account authentication and subscription management</li>
+                <li>✅ No personal data transmitted</li>
+            </ul>
+        </div>
+
+        <h2><span class="emoji">🔍</span> Data We Collect & Process</h2>
+        <p>Shabari follows a <strong>minimal data collection</strong> approach. The app processes certain data locally on your device based on your manual actions:</p>
+        
+        <h3>Information You Manually Choose to Scan (Processed Locally)</h3>
         <ul>
-            <li><strong>Email Address:</strong> Used only for account creation and authentication</li>
-            <li><strong>Subscription Status:</strong> Premium or free tier status for feature access</li>
-            <li><strong>Account Creation Date:</strong> For account management purposes</li>
+            <li><strong>SMS Messages:</strong> When you use the SMS Scanner, you manually select messages to analyze. Analysis happens on your device. <strong>Message content is never transmitted to our servers.</strong></li>
+            <li><strong>Files and Photos:</strong> When you choose "Scan File" or use "Share to Shabari", the file is processed on your device. For enhanced threat detection, only an anonymized file signature (hash) may be sent to VirusTotal. <strong>The actual file content is never uploaded.</strong></li>
+            <li><strong>URLs/Links:</strong> When you scan a URL manually or from a QR code, the URL is checked against Google Safe Browsing and VirusTotal for threat verification.</li>
+            <li><strong>QR Codes:</strong> When you point the camera at a QR code, the decoded content is analyzed for security threats. <strong>No images are stored.</strong></li>
         </ul>
 
-        <h3>Anonymous Analytics (Optional)</h3>
+        <h3>Account Information (Required for App Functionality)</h3>
         <ul>
-            <li><strong>App Usage Statistics:</strong> Which features are used (no personal content)</li>
-            <li><strong>Error Reports:</strong> Crash logs for app improvement (no personal data)</li>
-            <li><strong>Performance Metrics:</strong> App performance data (anonymous)</li>
+            <li><strong>Email Address:</strong> Used exclusively for account creation and authentication</li>
+            <li><strong>Subscription Status:</strong> Premium or free tier status to enable appropriate features</li>
+            <li><strong>Account Creation Date:</strong> For account management and support purposes</li>
+            <li><strong>App Settings:</strong> Your preferences and feature configurations</li>
+        </ul>
+
+        <h3>Optional Analytics (You Can Disable)</h3>
+        <ul>
+            <li><strong>App Usage Statistics:</strong> Which features are used (no personal content or scan results)</li>
+            <li><strong>Error Reports:</strong> Crash logs for app improvement (no personal data included)</li>
+            <li><strong>Performance Metrics:</strong> App performance data (completely anonymous)</li>
         </ul>
 
         <div class="privacy-guarantee">
-            <h2><span class="emoji">🚫</span> Data We DO NOT Collect</h2>
-            <p><strong>Shabari never collects the following:</strong></p>
+            <h2><span class="emoji">🚫</span> Data We NEVER Collect or Access</h2>
+            <p><strong>Shabari is designed with privacy-by-default. We never automatically collect or monitor:</strong></p>
             <ul>
-                <li><span class="emoji">📱</span> <strong>SMS Content:</strong> Messages are scanned locally only, never transmitted</li>
-                <li><span class="emoji">📁</span> <strong>File Contents:</strong> Files are analyzed on your device, content never uploaded</li>
-                <li><span class="emoji">📷</span> <strong>Photos/Documents:</strong> Image analysis happens locally, images never stored</li>
-                <li><span class="emoji">📍</span> <strong>Location Data:</strong> No location tracking or GPS data collection</li>
-                <li><span class="emoji">📞</span> <strong>Contact Information:</strong> No access to your contacts or call logs</li>
-                <li><span class="emoji">🎤</span> <strong>Audio/Video:</strong> No recording or monitoring of audio/video</li>
-                <li><span class="emoji">🔍</span> <strong>Browsing History:</strong> Secure browser history is never stored</li>
-                <li><span class="emoji">🔑</span> <strong>Passwords:</strong> No password storage or keylogging</li>
+                <li><span class="emoji">📱</span> <strong>SMS Content:</strong> No automatic reading, monitoring, or bulk collection of messages</li>
+                <li><span class="emoji">📁</span> <strong>File System:</strong> No automatic scanning or indexing of your files</li>
+                <li><span class="emoji">📋</span> <strong>Clipboard Data:</strong> No monitoring or access to clipboard content</li>
+                <li><span class="emoji">📍</span> <strong>Location Data:</strong> No GPS tracking or location access</li>
+                <li><span class="emoji">📞</span> <strong>Call Information:</strong> No access to call logs, contacts, or phone numbers</li>
+                <li><span class="emoji">🎤</span> <strong>Audio/Video:</strong> No recording, monitoring, or access to media</li>
+                <li><span class="emoji">🌐</span> <strong>Browsing History:</strong> No tracking of web browsing or browser history</li>
+                <li><span class="emoji">🔑</span> <strong>Passwords:</strong> No keylogging, password capture, or credential access</li>
+                <li><span class="emoji">👥</span> <strong>Social Media:</strong> No access to social media accounts or profiles</li>
+                <li><span class="emoji">💳</span> <strong>Financial Data:</strong> No access to banking apps or payment information</li>
             </ul>
         </div>
 
         <h2><span class="emoji">🛡️</span> How We Protect Your Privacy</h2>
         
-        <h3>Local Processing</h3>
+        <h3>Local, User-Initiated Processing</h3>
         <ul>
-            <li><strong>On-Device Analysis:</strong> All security scanning happens on your device</li>
-            <li><strong>No Content Transmission:</strong> SMS, files, and images analyzed locally</li>
-            <li><strong>Real-Time Processing:</strong> Data processed immediately and discarded</li>
-            <li><strong>Offline Capability:</strong> Core security features work without internet</li>
+            <li><strong>On-Device Analysis:</strong> Security scanning happens on your device using local algorithms</li>
+            <li><strong>Manual Control:</strong> Every security scan requires your explicit action</li>
+            <li><strong>Real-Time Processing:</strong> Data is analyzed immediately and not stored</li>
+            <li><strong>Offline Capability:</strong> Core security features work without internet connection</li>
         </ul>
 
-        <h3>Data Security</h3>
+        <h3>Data Security & Encryption</h3>
         <ul>
-            <li><strong>Encryption:</strong> All data transmission uses TLS 1.3 encryption</li>
-            <li><strong>Secure Storage:</strong> Minimal data stored using industry-standard encryption</li>
-            <li><strong>Authentication:</strong> Secure login with Supabase authentication</li>
-            <li><strong>No Plain Text:</strong> Sensitive data never stored in plain text</li>
+            <li><strong>TLS 1.3 Encryption:</strong> All network communications use the latest encryption standards</li>
+            <li><strong>Secure Storage:</strong> Minimal stored data uses AES-256 encryption</li>
+            <li><strong>Authentication:</strong> Secure login with Supabase (GDPR compliant)</li>
+            <li><strong>No Plain Text:</strong> Sensitive data never stored in readable format</li>
+            <li><strong>Local Processing:</strong> Personal data stays on your device</li>
         </ul>
 
-        <h2><span class="emoji">🔗</span> Third-Party Services</h2>
+        <h2><span class="emoji">🔗</span> Third-Party Services & Data Sharing</h2>
         <p>Shabari uses minimal third-party services, all with strict privacy protections:</p>
 
-        <h3>Supabase (Authentication & Database)</h3>
+        <h3>Supabase (Authentication & Database) - GDPR Compliant</h3>
         <ul>
             <li><strong>Purpose:</strong> Secure user authentication and subscription management</li>
             <li><strong>Data Shared:</strong> Email address and subscription status only</li>
             <li><strong>Privacy:</strong> GDPR compliant, end-to-end encrypted</li>
-            <li><strong>Location:</strong> EU-based servers for data protection</li>
+            <li><strong>Location:</strong> EU-based servers with data protection laws</li>
+            <li><strong>Control:</strong> You can delete your account anytime</li>
         </ul>
 
-        <h3>VirusTotal (Security Analysis)</h3>
+        <h3>VirusTotal (Security Analysis) - Anonymous Only</h3>
         <ul>
-            <li><strong>Purpose:</strong> Cloud-based threat verification (optional premium feature)</li>
-            <li><strong>Data Shared:</strong> Anonymous file hashes only (never file content)</li>
-            <li><strong>Privacy:</strong> No personal identifiers sent</li>
-            <li><strong>User Control:</strong> Can be disabled in settings</li>
+            <li><strong>Purpose:</strong> Verify file safety using anonymous file signatures (hashes)</li>
+            <li><strong>Data Shared:</strong> Anonymous file fingerprints only (never file content)</li>
+            <li><strong>Privacy:</strong> No personal identifiers or user data sent</li>
+            <li><strong>User Control:</strong> This feature can be disabled in app settings</li>
+            <li><strong>Transparency:</strong> Used only for user-initiated file scans</li>
+        </ul>
+
+        <h3>Google Safe Browsing (URL Verification) - Standard Security Service</h3>
+        <ul>
+            <li><strong>Purpose:</strong> Check URLs for phishing and malware (industry standard)</li>
+            <li><strong>Data Shared:</strong> URLs you manually scan only</li>
+            <li><strong>Privacy:</strong> Same service used by Chrome, Firefox, Safari</li>
+            <li><strong>User Control:</strong> Only for manual URL scanning</li>
         </ul>
 
         <div class="highlight">
-            <p><strong>Important:</strong> We do NOT share data with advertising networks, data brokers, or marketing companies.</p>
+            <p><strong>Important:</strong> We NEVER share data with advertising networks, data brokers, marketing companies, or any unauthorized third parties. Your security scan results are never shared with anyone.</p>
         </div>
 
         <h2><span class="emoji">📋</span> Your Rights & Controls</h2>
         
-        <h3>Account Management</h3>
+        <h3>Account Management Rights</h3>
         <ul>
             <li><strong>Account Deletion:</strong> Delete your account anytime from app settings</li>
-            <li><strong>Data Export:</strong> Request a copy of your data</li>
-            <li><strong>Data Correction:</strong> Update or correct your information</li>
-            <li><strong>Service Withdrawal:</strong> Stop using services without penalty</li>
+            <li><strong>Data Export:</strong> Request a copy of your stored data</li>
+            <li><strong>Data Correction:</strong> Update or correct your account information</li>
+            <li><strong>Service Withdrawal:</strong> Stop using services without any penalty</li>
+            <li><strong>Settings Control:</strong> Manage all privacy settings within the app</li>
         </ul>
 
-        <h3>Permission Controls</h3>
+        <h3>Permission Controls (You Have Full Control)</h3>
         <ul>
-            <li><strong>SMS Permissions:</strong> Revoke anytime in Android settings</li>
-            <li><strong>Camera Access:</strong> Only used for QR scanning when requested</li>
-            <li><strong>Storage Access:</strong> Only for manual file scanning</li>
-            <li><strong>Network Access:</strong> Required for VirusTotal (can be disabled)</li>
+            <li><strong>SMS Permissions:</strong> Revoke anytime in Android Settings → Apps → Shabari → Permissions</li>
+            <li><strong>Camera Access:</strong> Only used when you open QR scanner - can be revoked anytime</li>
+            <li><strong>Storage Access:</strong> Only for manual file scanning - can be revoked anytime</li>
+            <li><strong>Network Access:</strong> Can disable VirusTotal lookups in app settings</li>
+            <li><strong>Analytics:</strong> Can be completely disabled in privacy settings</li>
         </ul>
 
-        <h2><span class="emoji">⏰</span> Data Retention</h2>
+        <h3>Data Control Features</h3>
+        <ul>
+            <li><strong>Scan History:</strong> View and delete your scan history</li>
+            <li><strong>Privacy Settings:</strong> Granular control over all features</li>
+            <li><strong>Offline Mode:</strong> Use core features without internet</li>
+            <li><strong>Feature Disable:</strong> Turn off any feature you don't want to use</li>
+        </ul>
+
+        <h2><span class="emoji">🗑️</span> Account Deletion Process</h2>
         
-        <h3>Account Data</h3>
-        <ul>
-            <li><strong>Active Accounts:</strong> Data retained while account is active</li>
-            <li><strong>Deleted Accounts:</strong> All data permanently deleted within 30 days</li>
-            <li><strong>Inactive Accounts:</strong> Data deleted after 3 years of inactivity</li>
-        </ul>
-
-        <h3>Analytics Data</h3>
-        <ul>
-            <li><strong>Anonymous Analytics:</strong> Retained for maximum 90 days</li>
-            <li><strong>Error Logs:</strong> Retained for 30 days for debugging</li>
-            <li><strong>Performance Data:</strong> Aggregated data only, no individual tracking</li>
-        </ul>
-
-        <h3>Local Scan Data</h3>
-        <ul>
-            <li><strong>Temporary Processing:</strong> Data processed in RAM only</li>
-            <li><strong>No Persistent Storage:</strong> Scan results not saved to device</li>
-            <li><strong>Immediate Deletion:</strong> Data discarded after analysis</li>
-        </ul>
-
-        <h2><span class="emoji">🌍</span> Legal Compliance</h2>
-        
-        <h3>International Privacy Laws</h3>
-        <ul>
-            <li><strong>GDPR (EU):</strong> Full compliance with European data protection</li>
-            <li><strong>CCPA (California):</strong> California Consumer Privacy Act compliance</li>
-            <li><strong>PIPEDA (Canada):</strong> Personal Information Protection compliance</li>
-            <li><strong>DPDPA (India):</strong> Digital Personal Data Protection Act compliance</li>
-        </ul>
-
-        <h3>Children's Privacy</h3>
-        <ul>
-            <li><strong>Age Restriction:</strong> App intended for users 13+ years</li>
-            <li><strong>COPPA Compliance:</strong> No data collection from children under 13</li>
-            <li><strong>Parental Controls:</strong> Parents can request account deletion for minors</li>
-        </ul>
-
-        <h2><span class="emoji">🔄</span> Account Deletion Process</h2>
-        
-        <h3>In-App Deletion</h3>
+        <h3>In-App Deletion (Recommended)</h3>
         <ol>
             <li>Open Shabari app</li>
-            <li>Go to Settings → Account</li>
+            <li>Go to Settings → Account Management</li>
             <li>Select "Delete Account"</li>
-            <li>Confirm deletion</li>
-            <li>Account and data deleted within 30 days</li>
+            <li>Confirm deletion with your email</li>
+            <li>Account and all data deleted within 24 hours</li>
         </ol>
 
-        <h3>Web-Based Deletion</h3>
-        <p>If you've uninstalled the app, you can request account deletion by emailing <strong>privacy@shabari-app.com</strong> with:</p>
+        <h3>Email-Based Deletion</h3>
+        <p>If you've uninstalled the app, email us at <strong>mrdrsp2@gmail.com</strong> with:</p>
         <ul>
             <li>Your registered email address</li>
-            <li>Subject: "Account Deletion Request"</li>
-            <li>We'll process your request within 7 business days</li>
+            <li>Subject: "Account Deletion Request - Shabari"</li>
+            <li>We'll process your request within 24 hours</li>
+            <li>Confirmation email sent when completed</li>
         </ul>
 
-        <h2><span class="emoji">📞</span> Contact & Support</h2>
-        <div class="contact-info">
-            <h3>Privacy Questions</h3>
-            <p><strong>Email:</strong> privacy@shabari-app.com</p>
-            <p><strong>Response Time:</strong> Within 48 hours</p>
+        <h2><span class="emoji">🏪</span> Google Play Store Compliance</h2>
+        <div class="playstore-compliance">
+            <h3>Data Safety Section Information</h3>
+            <p>For transparency, here's exactly what we'll declare in the Google Play Store Data Safety section:</p>
             
-            <h3>General Support</h3>
-            <p><strong>Email:</strong> support@shabari-app.com</p>
-            <p><strong>Response Time:</strong> Within 24 hours</p>
-            
-            <h3>Legal Inquiries</h3>
-            <p><strong>Email:</strong> legal@shabari-app.com</p>
-            <p><strong>Developer:</strong> Shubham Prajapati, India</p>
-        </div>
-
-        <h2><span class="emoji">📝</span> Policy Updates</h2>
-        <ul>
-            <li><strong>Notification:</strong> Users notified of policy changes via in-app notification</li>
-            <li><strong>Consent:</strong> Major changes require user consent</li>
-            <li><strong>Version History:</strong> Previous versions available upon request</li>
-            <li><strong>Effective Date:</strong> Changes effective 30 days after notification</li>
-        </ul>
-
-        <div class="privacy-guarantee">
-            <h3><span class="emoji">✅</span> Our Commitment</h3>
-            <p><strong>Shabari promises to:</strong></p>
+            <h4>Data Types Accessed:</h4>
             <ul>
-                <li>Keep your personal data private and secure</li>
-                <li>Never sell your information to third parties</li>
-                <li>Provide transparent privacy practices</li>
-                <li>Give you full control over your data</li>
-                <li>Respond promptly to privacy concerns</li>
-                <li>Continuously improve our privacy protections</li>
+                <li><strong>Messages:</strong> SMS content for manual fraud detection only</li>
+                <li><strong>Photos and videos:</strong> Camera for QR code scanning only</li>
+                <li><strong>Files and docs:</strong> User-selected files for malware scanning only</li>
+                <li><strong>Personal info:</strong> Email address for account authentication only</li>
+            </ul>
+            
+            <h4>Data Usage:</h4>
+            <ul>
+                <li><strong>App functionality:</strong> Core security features</li>
+                <li><strong>Security:</strong> Fraud and malware detection</li>
+                <li><strong>Account management:</strong> Authentication and subscription</li>
+            </ul>
+            
+            <h4>Data Sharing:</h4>
+            <ul>
+                <li><strong>No personal data shared</strong> with third parties</li>
+                <li><strong>Anonymous file hashes only</strong> to VirusTotal (optional)</li>
+                <li><strong>URLs only</strong> to Google Safe Browsing (standard security practice)</li>
+            </ul>
+            
+            <h4>Security:</h4>
+            <ul>
+                <li><strong>Data encrypted in transit</strong> using TLS 1.3</li>
+                <li><strong>Data encrypted at rest</strong> using AES-256</li>
+                <li><strong>You can request data deletion</strong> anytime</li>
             </ul>
         </div>
 
-        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee;">
-            <p><span class="emoji">🛡️</span> <strong>Shabari (शबरी) - Your Digital Guardian</strong> <span class="emoji">🛡️</span></p>
-            <p style="color: #666;">Protecting your digital life with traditional Indian values and modern technology</p>
-            <p style="font-size: 0.9em; color: #999;">This privacy policy is effective as of January 15, 2024</p>
+        <h2><span class="emoji">📞</span> Contact & Support</h2>
+        
+        <div class="contact-info">
+            <h3>Privacy Questions & Data Requests</h3>
+            <p><strong>Email:</strong> mrdrsp2@gmail.com</p>
+            <p><strong>Subject Line:</strong> "Privacy Request - Shabari"</p>
+            <p><strong>Response Time:</strong> Within 24 hours</p>
+            
+            <h3>General Support</h3>
+            <p><strong>Email:</strong> mrdrsp2@gmail.com</p>
+            <p><strong>Response Time:</strong> Within 24 hours</p>
+            
+            <h3>Legal & Compliance</h3>
+            <p><strong>Developer:</strong> Shubham Prajapati</p>
+            <p><strong>Location:</strong> India</p>
+            <p><strong>Email:</strong> mrdrsp2@gmail.com</p>
         </div>
+
+        <h2><span class="emoji">🤝</span> Our Privacy Commitment</h2>
+        
+        <div class="privacy-guarantee">
+            <p><strong>Shabari promises to:</strong></p>
+            <ul>
+                <li>🔒 Keep your personal data private and secure</li>
+                <li>🚫 Never sell your information to third parties</li>
+                <li>📋 Provide transparent privacy practices</li>
+                <li>👤 Give you complete control over your data</li>
+                <li>⚡ Respond promptly to privacy concerns</li>
+                <li>🔄 Continuously improve our privacy protections</li>
+                <li>📱 Only scan what you explicitly choose to scan</li>
+                <li>🛡️ Process your data securely on your own device</li>
+                <li>📧 Use your email only for essential app functions</li>
+                <li>🔍 Be transparent about every permission we request</li>
+            </ul>
+        </div>
+
+        <div class="highlight">
+            <h3><span class="emoji">⚖️</span> Legal Compliance</h3>
+            <p>This privacy policy complies with:</p>
+            <ul>
+                <li><strong>Google Play Developer Policy</strong> - SMS and sensitive permissions</li>
+                <li><strong>Android Permissions Best Practices</strong> - Minimal and justified permissions</li>
+                <li><strong>GDPR</strong> - European data protection standards</li>
+                <li><strong>CCPA</strong> - California consumer privacy rights</li>
+                <li><strong>India Data Protection Laws</strong> - Local privacy requirements</li>
+            </ul>
+        </div>
+
+        <footer style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee;">
+            <h2><span class="emoji">🛡️</span> Shabari (शबरी) - Your Digital Guardian</h2>
+            <p><strong>Protecting your digital life with traditional Indian values and modern technology</strong></p>
+            <p style="color: #666; font-style: italic;">
+                This privacy policy is effective as of January 15, 2025 and supersedes all previous versions
+            </p>
+        </footer>
     </div>
 </body>
 </html> 

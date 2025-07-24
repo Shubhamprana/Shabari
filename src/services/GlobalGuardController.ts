@@ -523,6 +523,18 @@ export class GlobalGuardController {
       console.error('❌ GlobalGuardController cleanup error:', error);
     }
   }
+
+  public async activateGuardForLimitedTime(durationMinutes: number): Promise<boolean> {
+    const activated = await this.activateGuard();
+    if (activated) {
+      console.log(`🛡️ Global Guard activated for ${durationMinutes} minutes.`);
+      setTimeout(() => {
+        console.log(`⏰ Time's up! Deactivating Global Guard.`);
+        this.deactivateGuard();
+      }, durationMinutes * 60 * 1000);
+    }
+    return activated;
+  }
 }
 
 // Export singleton instance

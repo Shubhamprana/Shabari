@@ -56,6 +56,12 @@ export interface YaraEngineInterface {
    * @returns Promise that resolves with rules count
    */
   getLoadedRulesCount(): Promise<number>;
+
+  /**
+   * Check if the native YARA library is available
+   * @returns Promise that resolves with boolean indicating native availability
+   */
+  isNativeEngineAvailable(): Promise<boolean>;
 }
 
 declare const YaraEngine: YaraEngineInterface;

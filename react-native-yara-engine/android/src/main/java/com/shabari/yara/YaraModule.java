@@ -132,5 +132,16 @@ public class YaraModule extends ReactContextBaseJavaModule {
             promise.reject("COUNT_ERROR", "Error getting loaded rules count: " + e.getMessage());
         }
     }
+
+    @ReactMethod
+    public void isNativeEngineAvailable(Promise promise) {
+        try {
+            boolean isNative = YaraEngine.isNativeLibraryAvailable();
+            promise.resolve(isNative);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking native engine availability", e);
+            promise.reject("NATIVE_CHECK_ERROR", "Error checking native engine: " + e.getMessage());
+        }
+    }
 }
 
