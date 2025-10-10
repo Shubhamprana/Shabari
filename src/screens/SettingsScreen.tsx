@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
     ActivityIndicator,
     Alert,
@@ -12,6 +13,8 @@ import {
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { YaraSecurityService } from '../services/YaraSecurityService';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
+import { PremiumUpgrade } from '../components/PremiumUpgrade';
 
 interface EngineStatus {
   available: boolean;
@@ -24,14 +27,22 @@ interface EngineStatus {
 interface SettingsScreenProps {
   onNavigateToUpgrade: () => void;
   onGoBack: () => void;
+  // New: navigate to VPN control panel
+  onNavigateToVPNControl: () => void;
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onNavigateToUpgrade,
   onGoBack,
+  onNavigateToVPNControl,
 }) => {
   const [engineStatus, setEngineStatus] = useState<EngineStatus | null>(null);
   const [isLoadingStatus, setIsLoadingStatus] = useState(false);
+  const { isPremium } = useSubscriptionStore();
+  const [upgradeVisible, setUpgradeVisible] = useState(false);
+
+  // Debug: Log component initialization
+  console.log('🛷 SettingsScreen component initialized');
 
   const handleLogout = async () => {
     Alert.alert(
@@ -206,12 +217,69 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
-  const ListItem = ({ title, subtitle, onPress, color = '#ffffff' }: any) => (
+  const activateYaraEngine = async () => {
+    console.log('🛷 activateYaraEngine function called');
+    try {
+      Alert.alert(
+        '🛡️ Activate YARA Engine',
+        'This will initialize the YARA security engine for enhanced threat detection. Continue?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Activate',
+            onPress: async () => {
+              setIsLoadingStatus(true);
+              try {
+                console.log('🔄 Manual YARA engine activation requested');
+                const isInitialized = await YaraSecurityService.initialize();
+                
+                if (isInitialized) {
+                  Alert.alert(
+                    '✅ Success',
+                    'YARA engine has been successfully activated! Enhanced threat detection is now available.',
+                    [{ text: 'OK' }]
+                  );
+                  
+                  // Refresh the engine status
+                  const status = await YaraSecurityService.getEngineStatus();
+                  setEngineStatus(status);
+                  
+                  console.log('✅ YARA engine manually activated successfully');
+                } else {
+                  Alert.alert(
+                    '⚠️ Activation Failed',
+                    'YARA engine could not be activated. The app will continue using fallback protection methods.',
+                    [{ text: 'OK' }]
+                  );
+                  console.warn('⚠️ Manual YARA engine activation failed');
+                }
+              } catch (error) {
+                console.error('❌ Manual YARA engine activation error:', error);
+                Alert.alert(
+                  '❌ Error',
+                  'An error occurred while activating the YARA engine. Please try again.',
+                  [{ text: 'OK' }]
+                );
+              } finally {
+                setIsLoadingStatus(false);
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('❌ YARA activation handler error:', error);
+      Alert.alert('❌ Error', 'Failed to show activation dialog.');
+    }
+  };
+
+  const ListItem = ({ title, subtitle, onPress, color = '#ffffff', rightAccessory }: any) => (
     <TouchableOpacity style={styles.listItem} onPress={onPress}>
       <View style={styles.listItemContent}>
         <Text style={[styles.listItemTitle, { color }]}>{title}</Text>
         {subtitle && <Text style={styles.listItemSubtitle}>{subtitle}</Text>}
       </View>
+      {rightAccessory}
       <Text style={styles.listItemArrow}>›</Text>
     </TouchableOpacity>
   );
@@ -227,6 +295,28 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
       </View>
 
       <ScrollView style={styles.content}>
+        {/* New: Protection section with VPN control entry */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🛡️ Protection</Text>
+          <ListItem
+            title="🔐 VPN & Proxy Control"
+            subtitle={isPremium ? "Start/stop VPN and configure ad/tracker blocking" : "Premium only"}
+            onPress={() => {
+              if (isPremium) {
+                onNavigateToVPNControl();
+              } else {
+                setUpgradeVisible(true);
+              }
+            }}
+            rightAccessory={!isPremium ? (
+              <View style={styles.lockBadgeRow}>
+                <MaterialCommunityIcons name="lock" size={14} color="#000" />
+                <Text style={styles.lockBadgeText}>Premium</Text>
+              </View>
+            ) : null}
+          />
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>💳 Account</Text>
           <ListItem
@@ -250,6 +340,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🤝 Support</Text>
           <ListItem
+            title="📞 Report Spam Number"
+            subtitle="Help protect the community by reporting suspicious calls"
+            onPress={() => onNavigateToUpgrade()} // Will be replaced with navigation to ReportNumberScreen
+          />
+          <ListItem
             title="💬 Contact Support"
             subtitle="Get help with your account or app issues"
             onPress={handleContactSupport}
@@ -267,6 +362,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
             title="🔬 Check Engine Status"
             subtitle="Verify if the native YARA engine is active"
             onPress={handleCheckEngineStatus}
+          />
+          <ListItem
+            title="🛡️ Activate YARA Engine"
+            subtitle="Initialize YARA engine for enhanced threat detection"
+            onPress={activateYaraEngine}
           />
           {isLoadingStatus && <ActivityIndicator style={{ marginTop: 10 }} color="#4ecdc4" />}
           {engineStatus && (
@@ -315,6 +415,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <Text style={styles.footerSubtext}>Your Digital Guardian 🛡️</Text>
         </View>
       </ScrollView>
+
+      {/* Premium Upgrade Modal */}
+      <PremiumUpgrade
+        visible={upgradeVisible}
+        onClose={() => setUpgradeVisible(false)}
+        featureRequested="VPN & Proxy Control"
+      />
     </View>
   );
 };
@@ -502,6 +609,28 @@ const styles = StyleSheet.create({
   statusValueWarning: {
     color: '#e74c3c',
     fontWeight: 'bold',
+  },
+  lockBadge: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginRight: 8,
+  },
+  lockBadgeRow: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginRight: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  lockBadgeText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
 

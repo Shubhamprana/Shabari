@@ -3,18 +3,26 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 // Screens
+import { AdminScreen } from '../screens/AdminScreen';
+import { CallLogScreen } from '../screens/CallLogScreen';
 import DashboardScreen from '../screens/DashboardScreen';
+import DeepScanScreen from '../screens/DeepScanScreen';
 import { FeatureManagementScreen } from '../screens/FeatureManagementScreen';
 import LiveQRScannerScreen from '../screens/LiveQRScannerScreen';
 import LoginScreen from '../screens/LoginScreen';
 import { ManualSMSScannerScreen } from '../screens/ManualSMSScannerScreen';
 import MessageAnalysisScreen from '../screens/MessageAnalysisScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
+import { ProxyEngineTestScreen } from '../screens/ProxyEngineTestScreen';
 import { QuarantineScreen } from '../screens/QuarantineScreen';
+import { ReportNumberScreen } from '../screens/ReportNumberScreen';
 import ScanResultScreen from '../screens/ScanResultScreen';
 import SecureBrowserScreen from '../screens/SecureBrowserScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SMSScannerScreen from '../screens/SMSScannerScreen';
+import { ThreatDetectionScreen } from '../screens/ThreatDetectionScreen';
+import { ThreatDetectionSettingsScreen } from '../screens/ThreatDetectionSettingsScreen';
+import { VPNControlScreen } from '../screens/VPNControlScreen';
 
 // Stores
 import { initializeAuthListener, useAuthStore } from '../stores/authStore';
@@ -153,6 +161,10 @@ const AppNavigator: React.FC = () => {
                   console.log('🔄 Navigating to ScanResult');
                   props.navigation.navigate('ScanResult', result);
                 }}
+                onNavigateToQRScanner={() => {
+                  console.log('🔄 Navigating to LiveQRScanner');
+                  props.navigation.navigate('LiveQRScanner');
+                }}
                 onNavigateToSettings={() => {
                   console.log('🔄 Navigating to Settings');
                   props.navigation.navigate('Settings');
@@ -231,13 +243,33 @@ const AppNavigator: React.FC = () => {
               <SettingsScreen
                 {...props}
                 onNavigateToUpgrade={() => {
-                  console.log('🔄 Navigate to upgrade');
-                  // In a real app, this would navigate to upgrade screen
+                  console.log('🔄 Navigate to ReportNumber');
+                  props.navigation.navigate('ReportNumber');
                 }}
                 onGoBack={() => {
                   console.log('🔄 Going back from Settings');
                   props.navigation.goBack();
                 }}
+                onNavigateToVPNControl={() => {
+                  console.log('🔄 Navigating to VPNControl');
+                  props.navigation.navigate('VPNControl');
+                }}
+              />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="ReportNumber">
+            {(props) => (
+              <ReportNumberScreen
+                {...props}
+                navigation={props.navigation}
+              />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="CallLog">
+            {(props) => (
+              <CallLogScreen
+                {...props}
+                navigation={props.navigation}
               />
             )}
           </Stack.Screen>
@@ -265,6 +297,46 @@ const AppNavigator: React.FC = () => {
               <QuarantineScreen />
             )}
           </Stack.Screen>
+          <Stack.Screen name="Admin">
+            {(props) => (
+              <AdminScreen />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="ThreatDetection">
+            {(props) => (
+              <ThreatDetectionScreen />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="ThreatDetectionSettings">
+            {(props) => (
+              <ThreatDetectionSettingsScreen />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="ProxyEngineTest">
+            {(props) => (
+              <ProxyEngineTestScreen />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="VPNControl">
+            {(props) => (
+              <VPNControlScreen />
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="DeepScan">
+            {(props) => (
+              <DeepScanScreen
+                {...props}
+                onGoBack={() => {
+                  console.log('🔄 Going back from DeepScan');
+                  props.navigation.goBack();
+                }}
+                onNavigateToQuarantine={() => {
+                  console.log('🔄 Navigating to Quarantine from DeepScan');
+                  props.navigation.navigate('Quarantine');
+                }}
+              />
+            )}
+          </Stack.Screen>
         </>
       )}
     </Stack.Navigator>
@@ -287,4 +359,3 @@ const styles = StyleSheet.create({
 });
 
 export default AppNavigator;
-

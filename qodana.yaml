@@ -1,0 +1,49 @@
+#-------------------------------------------------------------------------------#
+#               Qodana analysis is configured by qodana.yaml file               #
+#             https://www.jetbrains.com/help/qodana/qodana-yaml.html            #
+#-------------------------------------------------------------------------------#
+#################################################################################
+#              WARNING: Do not store sensitive information in this file,        #
+#               as its contents will be included in the Qodana report.          #
+#################################################################################
+version: "1.0"
+
+#Specify inspection profile for code analysis
+profile:
+  name: qodana.starter
+
+#Specify Qodana linter for analysis (Applied in CI/CD pipeline)
+# Using JS linter for React Native/TypeScript project
+linter: jetbrains/qodana-js:2025.2
+
+# Exclude paths that don't need analysis
+exclude:
+  - name: All
+    paths:
+      - node_modules
+      - .expo
+      - .expo-shared
+      - android/build
+      - ios/build
+      - dist
+      - build
+      - coverage
+      - .idea
+      - .vscode
+      - assets
+      - test_data
+      - phistank_csv
+      - docs
+
+# Include only source code directories for analysis
+include:
+  - name: All
+    paths:
+      - src
+      - App.tsx
+      - app.config.js
+
+# Disable specific noisy inspections if needed
+# exclude:
+#   - name: JSUnusedGlobalSymbols
+#   - name: JSUnusedLocalSymbols
