@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "generated_at": "2025-09-28T00:00:00Z",
+  "description": "Sample threat feed for Shabari proxy engine end-to-end tests. Contains ad/tracker domains, malware/phishing IPs, scam phone numbers and suspicious Android package names to simulate a real-world data source like Truecaller or EasyList.",
+  "sources": [
+    "easylist",
+    "phishtank",
+    "truecaller-community",
+    "malware-domain-list",
+    "shabari-internal-honeypot"
+  ],
+  "domains": [
+    {
+      "domain": "ads.eviltracker.com",
+      "category": "ad",
+      "threat_level": "medium",
+      "reason": "Known ad-tech tracker domain (EasyList)"
+    },
+    {
+      "domain": "malware.badstuff.net",
+      "category": "malware",
+      "threat_level": "high",
+      "reason": "Distribution point for RedLine Stealer (MDL)"
+    },
+    {
+      "domain": "login.paypa1.com",
+      "category": "phishing",
+      "threat_level": "critical",
+      "reason": "Typosquatting PayPal credential harvester (PhishTank)"
+    }
+  ],
+  "ips": [
+    {
+      "ip": "45.56.123.23",
+      "category": "botnet",
+      "threat_level": "high",
+      "reason": "C2 server for Mirai variant (Shabari honeypot)"
+    },
+    {
+      "ip": "104.27.31.5",
+      "category": "phishing",
+      "threat_level": "medium",
+      "reason": "Hosts fake banking portals"
+    }
+  ],
+  "phone_numbers": [
+    {
+      "number": "+18005550199",
+      "category": "scam_call",
+      "threat_level": "medium",
+      "reason": "IRS tax scam robocall (Truecaller community)"
+    },
+    {
+      "number": "+447700900123",
+      "category": "fraud_call",
+      "threat_level": "high",
+      "reason": "Bank OTP phishing via voice"
+    }
+  ],
+  "android_packages": [
+    {
+      "package": "com.fake.flashlight",
+      "category": "malware",
+      "threat_level": "high",
+      "reason": "Bundles Joker spyware family"
+    },
+    {
+      "package": "com.freevpn.fast",
+      "category": "adware",
+      "threat_level": "medium",
+      "reason": "Displays intrusive full-screen ads"
+    }
+  ]
+}

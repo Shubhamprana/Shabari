@@ -1,11 +1,8 @@
 module.exports = {
   "name": "Shabari",
   "slug": "shabari",
-  "version": "1.0.0",
-  "platforms": [
-    "android",
-    "web"
-  ],
+  "version": "1.1.0",
+  "platforms": ["android"],
   "orientation": "portrait",
   "icon": "./assets/images/icon.png",
   "userInterfaceStyle": "light",
@@ -14,101 +11,62 @@ module.exports = {
     "resizeMode": "contain",
     "backgroundColor": "#ffffff"
   },
-  "assetBundlePatterns": [
-    "**/*"
-  ],
-  "ios": {
-    "supportsTablet": true
-  },
+  "assetBundlePatterns": ["**/*"],
+  "scheme": "shabari",
   "android": {
     "adaptiveIcon": {
-      "foregroundImage": "./assets/images/adaptive-icon.png",
+      "foregroundImage": "./assets/images/icon.png",
       "backgroundColor": "#ffffff"
     },
     "package": "com.shabari.app",
-    "versionCode": 61,
+    "versionCode": 3,
     "privacyPolicy": "https://shubham485.github.io/shabari-privacy-policy/",
+    "intentFilters": [
+      {
+        "action": "VIEW",
+        "autoVerify": true,
+        "data": [
+          {
+            "scheme": "shabari"
+          }
+        ],
+        "category": ["BROWSABLE", "DEFAULT"]
+      }
+    ],
     "permissions": [
       "android.permission.CAMERA",
-      "android.permission.READ_SMS",
       "android.permission.INTERNET",
-      "android.permission.ACCESS_NETWORK_STATE"
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.POST_NOTIFICATIONS"
     ]
   },
-  "web": {
-    "favicon": "./assets/images/favicon.png"
-  },
-  "scheme": "shabari",
-  "intentFilters": [
-    {
-      "action": "VIEW",
-      "autoVerify": true,
-      "data": [
-        {
-          "scheme": "https",
-          "host": "mynbtxrbqbmhxvaimfhs.supabase.co"
-        }
-      ],
-      "category": ["BROWSABLE", "DEFAULT"]
-    }
-  ],
   "plugins": [
     "expo-dev-client",
     "expo-notifications",
-    [
-      "expo-share-intent",
-      {
-        "iosActivationRules": {
-          "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
-          "NSExtensionActivationSupportsWebPageWithMaxCount": 1,
-          "NSExtensionActivationSupportsImageWithMaxCount": 1,
-          "NSExtensionActivationSupportsFileWithMaxCount": 1
-        },
-        "androidIntentFilters": ["text/*", "image/*"],
-        "androidMultiIntentFilters": ["image/*", "*/*"]
+    "./expo-plugins/withGmsDependencies",
+    "./react-native-yara-engine/app.plugin.js",
+    "./react-native-proxy-engine/app.plugin.js",
+    ["expo-image-picker", {
+      "photosPermission": "The app accesses your photos to scan suspicious images.",
+      "cameraPermission": "The app accesses your camera to capture screenshots."
+    }],
+    ["expo-barcode-scanner", {
+      "cameraPermission": "The app uses the camera to scan QR codes."
+    }],
+    ["expo-build-properties", {
+      "android": {
+        "minSdkVersion": 24,
+        "compileSdkVersion": 35,
+        "targetSdkVersion": 34,
+        "enableProguardInReleaseBuilds": true,
+        "proguardFiles": ["./proguard-rules.pro"],
+        "extraProguardRules": "-keep class com.google.android.gms.auth.api.credentials.** { *; }\n-dontwarn com.google.android.gms.**\n-dontwarn me.furtado.smsretriever.**\n-keep class com.google.android.gms.common.** { *; }\n-keep class com.google.android.gms.tasks.** { *; }\n"
       }
-    ],
-    [
-      "expo-image-picker",
-      {
-        "photosPermission": "The app accesses your photos to scan suspicious images for fraud detection.",
-        "cameraPermission": "The app accesses your camera to capture screenshots for fraud analysis."
-      }
-    ],
-    [
-      "expo-barcode-scanner",
-      {
-        "cameraPermission": "The app uses the camera to scan QR codes for fraud detection."
-      }
-    ],
-    [
-      "expo-build-properties",
-      {
-        "android": {
-          "minSdkVersion": 24,
-          "enableNativeMLKit": true,
-          "compileSdkVersion": 35,
-          "targetSdkVersion": 34,
-          "buildToolsVersion": "34.0.0",
-          "kotlinVersion": "1.9.25",
-          "ndkVersion": "25.1.8937393",
-          "enableProguardInReleaseBuilds": false,
-          "enableHermes": true,
-          "newArchEnabled": false,
-          "manifestPlaceholders": {
-            "shareIntentFilterLabel": "Scan with Shabari"
-          }
-        }
-      }
-    ],
-    "./react-native-yara-engine/app.plugin.js"
+    }]
   ],
-
-  "owner": "shubham485",
-  "newArchEnabled": false,
   "extra": {
     "eas": {
-      "projectId": "3324cd17-9f20-4d91-8a33-8ed81dbac5d7"
+      "projectId": "f51eb8e6-5481-4d41-9035-50a633a75ee3"
     }
   }
-}; 
+};

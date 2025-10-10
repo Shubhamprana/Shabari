@@ -1,0 +1,151 @@
+%% Shabari Service Architecture - Master Diagram
+graph TB
+    subgraph "User Interface Layer"
+        UI1[Dashboard Screen]
+        UI2[Settings Screen]
+        UI3[Scan Result Screen]
+        UI4[Security Browser Screen]
+        UI5[QR Scanner Screen]
+    end
+    
+    subgraph "Core Security Services"
+        CS1[Document Scanner Service]
+        CS2[Link Scanner Service]
+        CS3[QR Scanner Service]
+        CS4[Native File Scanner]
+        CS5[YARA Security Engine]
+        CS6[Photo Fraud Detection]
+    end
+    
+    subgraph "Premium Security Services"
+        PS1[SMS Shield Service]
+        PS2[Secure Browser Service]
+        PS3[AI Guardian Service]
+        PS4[OTP Insight Service]
+        PS5[ML Integration Service]
+        PS6[Privacy Guard Service]
+    end
+    
+    subgraph "Background Monitoring"
+        BM1[Clipboard URL Monitor]
+        BM2[Share Intent Service]
+        BM3[Global Guard Controller]
+        BM4[File Watchdog Service]
+        BM5[Network Traffic Monitor]
+        BM6[Auto Initialization Service]
+    end
+    
+    subgraph "Data Management Layer"
+        DM1[Supabase Database]
+        DM2[AsyncStorage]
+        DM3[Zustand State Management]
+        DM4[Secure Storage]
+        DM5[Cache Management]
+    end
+    
+    subgraph "External APIs"
+        API1[Google Safe Browsing]
+        API2[VirusTotal API]
+        API3[Threat Intelligence APIs]
+        API4[ML/AI Services]
+    end
+    
+    subgraph "Notification System"
+        NS1[Expo Notification Service]
+        NS2[Alert Management]
+        NS3[Push Notifications]
+        NS4[In-App Alerts]
+    end
+    
+    subgraph "Authentication & Subscription"
+        AS1[Supabase Auth]
+        AS2[Subscription Store]
+        AS3[Feature Permission Store]
+        AS4[User Management]
+    end
+    
+    %% UI Layer Connections
+    UI1 --> CS1
+    UI1 --> CS2
+    UI1 --> CS3
+    UI1 --> PS1
+    UI1 --> PS2
+    UI1 --> PS3
+    UI2 --> AS2
+    UI2 --> AS3
+    UI3 --> DM1
+    UI4 --> PS2
+    UI5 --> CS3
+    
+    %% Core Services Connections
+    CS1 --> CS4
+    CS1 --> CS5
+    CS1 --> CS6
+    CS1 --> API2
+    CS2 --> API1
+    CS2 --> API3
+    CS3 --> CS2
+    
+    %% Premium Services Connections
+    PS1 --> PS4
+    PS1 --> PS5
+    PS2 --> BM3
+    PS3 --> PS4
+    PS3 --> PS5
+    PS6 --> BM4
+    
+    %% Background Monitoring Connections
+    BM1 --> CS2
+    BM2 --> CS1
+    BM3 --> API1
+    BM4 --> CS4
+    BM5 --> BM3
+    BM6 --> NS1
+    
+    %% Data Management Connections
+    CS1 --> DM1
+    CS2 --> DM1
+    PS1 --> DM1
+    DM2 --> DM3
+    DM3 --> DM4
+    DM1 --> DM5
+    
+    %% Notification Connections
+    CS1 --> NS1
+    CS2 --> NS1
+    PS1 --> NS1
+    PS3 --> NS2
+    BM3 --> NS3
+    NS1 --> UI1
+    
+    %% Authentication Connections
+    AS1 --> DM1
+    AS2 --> PS1
+    AS2 --> PS2
+    AS2 --> PS3
+    AS3 --> BM1
+    AS3 --> BM2
+    
+    %% External API Connections
+    API4 --> PS5
+    API3 --> PS3
+    
+    %% Styling
+    classDef uiLayer fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    classDef coreService fill:#E8F5E8,stroke:#388E3C,stroke-width:2px
+    classDef premiumService fill:#FFF3E0,stroke:#F57C00,stroke-width:2px
+    classDef monitoring fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+    classDef dataLayer fill:#EFEBE9,stroke:#5D4037,stroke-width:2px
+    classDef apiLayer fill:#FDE7F3,stroke:#C2185B,stroke-width:2px
+    classDef notificationLayer fill:#E0F2F1,stroke:#00796B,stroke-width:2px
+    classDef authLayer fill:#FCE4EC,stroke:#AD1457,stroke-width:2px
+    
+    class UI1,UI2,UI3,UI4,UI5 uiLayer
+    class CS1,CS2,CS3,CS4,CS5,CS6 coreService
+    class PS1,PS2,PS3,PS4,PS5,PS6 premiumService
+    class BM1,BM2,BM3,BM4,BM5,BM6 monitoring
+    class DM1,DM2,DM3,DM4,DM5 dataLayer
+    class API1,API2,API3,API4 apiLayer
+    class NS1,NS2,NS3,NS4 notificationLayer
+    class AS1,AS2,AS3,AS4 authLayer
+

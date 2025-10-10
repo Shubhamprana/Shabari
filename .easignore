@@ -1,15 +1,28 @@
-# Prevent EAS from overwriting manually fixed Android native code
-# This ensures our MainApplication.kt and MainActivity.kt fixes are preserved
+# Gradle caches
+/android/.gradle
+/android/app/.gradle
+/android/.cxx
+/android/app/.cxx
+/android/app/build
+/android/build
 
-# Don't ignore the android folder entirely - we want EAS to use our local version
-# android/
-
-# But ignore specific files that might cause conflicts
+# Node modules (already in .gitignore but good to have here)
 node_modules/
-.expo/
-dist/
-build/
 
-# Keep our android source files
-!android/app/src/main/java/com/shabari/app/MainActivity.kt
-!android/app/src/main/java/com/shabari/app/MainApplication.kt 
+# Build outputs
+*.apk
+*.aab
+*.ipa
+
+# Local configuration
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.log
+*.tmp
+.DS_Store

@@ -1,0 +1,82 @@
+# Development files
+__tests__/
+coverage/
+.nyc_output/
+test-results/
+junit.xml
+
+# Build artifacts (keep only necessary ones)
+android/build/
+android/.gradle/
+android/gradle/wrapper/gradle-wrapper.jar
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories (will be installed by user)
+node_modules/
+
+# Optional files
+.env
+.env.test
+local.properties
+
+# Git files
+.git/
+.gitignore
+
+# Documentation source files (keep compiled docs)
+docs/src/
+
+# Scripts (keep only essential ones)
+scripts/test.sh
+
+# Example app dependencies
+example/node_modules/
+example/android/build/
+example/ios/build/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Cache directories
+.cache/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+# Coverage reports
+coverage/
+*.lcov
+

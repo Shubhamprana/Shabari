@@ -1,0 +1,303 @@
+graph TD
+    %% Document Scanner Service Flow
+    subgraph DS["Document Scanner Service"]
+        A1[User Clicks Scan File] --> B1{Platform Check}
+        B1 -->|Web| C1[HTML File Input]
+        B1 -->|Mobile| D1[File Source Selection]
+        
+        C1 --> C1_1[File Selection Dialog]
+        C1_1 --> C1_2[File Object Created]
+        C1_2 --> C1_3[Show Loading State]
+        
+        C1_3 --> C1_4[Web File Analysis]
+        
+        D1 --> D1_1{Source Type}
+        D1_1 -->|Camera| D1_2[Camera Capture]
+        D1_1 -->|Gallery| D1_3[Gallery Selection]
+        D1_1 -->|Documents| D1_4[Document Picker]
+        
+        D1_2 --> E1[File URI Obtained]
+        D1_3 --> E1
+        D1_4 --> E1
+        C1_4 --> F1[Security Analysis Pipeline]
+        E1 --> F1
+        
+        F1 --> F1_1[Native File Scanner]
+        F1_1 --> F1_2[YARA Security Engine]
+        F1_2 --> F1_3[File Extension Analysis]
+        F1_3 --> F1_4[File Size Validation]
+        F1_4 --> F1_5[Suspicious Name Detection]
+        F1_5 --> F1_6{Is Image File?}
+        F1_6 -->|Yes| F1_7[Photo Fraud Detection]
+        F1_6 -->|No| F1_8[Direct Result Processing]
+        F1_7 --> F1_8
+        
+        F1_8 --> G1[Threat Assessment]
+        G1 --> G1_1{Threat Level}
+        G1_1 -->|Safe| G1_2[Generate Safe Result]
+        G1_1 -->|Suspicious| G1_3[Generate Warning Result]
+        G1_1 -->|Dangerous| G1_4[Generate Danger Result]
+        
+        G1_2 --> H1[Scan Result Screen]
+        G1_3 --> H1
+        G1_4 --> H1
+        
+        H1 --> I1[Update Scan Statistics]
+        I1 --> J1[Save to Database]
+        J1 --> K1[Send Notification if Dangerous]
+    end
+
+    %% SMS Shield Service Flow
+    subgraph SS["SMS Shield Service"]
+        A2[SMS Received] --> B2[SMS Reader Service]
+        B2 --> B2_1{Premium User?}
+        B2_1 -->|No| B2_2[Basic OTP Detection Only]
+        B2_1 -->|Yes| C2[Advanced SMS Analysis]
+        
+        C2 --> C2_1[Extract Message Content]
+        C2_1 --> C2_2[Sender ID Analysis]
+        C2_2 --> C2_3[OTP Insight Service]
+        
+        C2_3 --> C2_4[Sender Verification]
+        C2_4 --> C2_5{Known Sender?}
+        C2_5 -->|Trusted| C2_6[Low Risk Assessment]
+        C2_5 -->|Unknown| C2_7[Enhanced Analysis]
+        C2_5 -->|Blacklisted| C2_8[High Risk Assessment]
+        
+        C2_7 --> D2[ML Integration Service]
+        D2 --> D2_1[Pattern Recognition]
+        D2_1 --> D2_2[Fraud Detection Models]
+        D2_2 --> D2_3[Context Analysis]
+        D2_3 --> D2_4[Risk Scoring]
+        
+        D2_4 --> E2{Risk Level}
+        E2 -->|Low| E2_1[Safe SMS Notification]
+        E2 -->|Medium| E2_2[Warning Notification]
+        E2 -->|High| E2_3[Fraud Alert Notification]
+        
+        C2_6 --> E2_1
+        C2_8 --> E2_3
+        
+        E2_1 --> F2[Update SMS Statistics]
+        E2_2 --> F2_1[Log Warning Event]
+        E2_3 --> F2_2[Log Fraud Attempt]
+        
+        F2 --> G2[User Dashboard Update]
+        F2_1 --> G2_1[Security Alert Dashboard]
+        F2_2 --> G2_2[Immediate Action Required]
+        
+        B2_2 --> B2_3[Simple OTP Extraction]
+        B2_3 --> B2_4[Basic Safety Check]
+        B2_4 --> B2_5[Standard Notification]
+    end
+
+    %% QR Scanner Service Flow
+    subgraph QS["QR Scanner Service"]
+        A3[User Opens QR Scanner] --> B3[Camera Permission Check]
+        B3 --> B3_1{Permission Granted?}
+        B3_1 -->|No| B3_2[Request Camera Permission]
+        B3_1 -->|Yes| C3[Initialize Camera]
+        B3_2 --> B3_3{Permission Result}
+        B3_3 -->|Denied| B3_4[Show Permission Error]
+        B3_3 -->|Granted| C3
+        
+        C3 --> C3_1[Start Camera Stream]
+        C3_1 --> C3_2[Initialize QR Detection]
+        C3_2 --> D3[Continuous QR Scanning Loop]
+        
+        D3 --> D3_1{QR Code Detected?}
+        D3_1 -->|No| D3
+        D3_1 -->|Yes| E3[Extract QR Data]
+        
+        E3 --> E3_1[Analyze QR Content]
+        E3_1 --> E3_2{Content Type}
+        E3_2 -->|URL| E3_3[URL Security Analysis]
+        E3_2 -->|WiFi| E3_4[WiFi Security Check]
+        E3_2 -->|Contact| E3_5[Contact Data Validation]
+        E3_2 -->|Text| E3_6[Text Content Analysis]
+        E3_2 -->|Payment| E3_7[Payment Security Check]
+        
+        E3_3 --> F3[Link Scanner Service]
+        E3_4 --> F3_1[WiFi Security Validation]
+        E3_5 --> F3_2[Contact Safety Check]
+        E3_6 --> F3_3[Text Pattern Analysis]
+        E3_7 --> F3_4[Payment Fraud Detection]
+        
+        F3 --> G3[Security Assessment]
+        F3_1 --> G3
+        F3_2 --> G3
+        F3_3 --> G3
+        F3_4 --> G3
+        
+        G3 --> G3_1{Safety Level}
+        G3_1 -->|Safe| G3_2[Green Result Display]
+        G3_1 -->|Warning| G3_3[Yellow Warning Display]
+        G3_1 -->|Dangerous| G3_4[Red Danger Display]
+        
+        G3_2 --> H3[Result Actions Menu]
+        G3_3 --> H3
+        G3_4 --> H3
+        
+        H3 --> H3_1[Save QR Scan Result]
+        H3_1 --> H3_2[Update Statistics]
+        H3_2 --> H3_3{User Action}
+        H3_3 -->|Open Safely| H3_4[Safe Content Access]
+        H3_3 -->|Copy Content| H3_5[Copy to Clipboard]
+        H3_3 -->|Report Threat| H3_6[Threat Reporting]
+        H3_3 -->|Scan Again| D3
+    end
+
+    %% AI Guardian Service Flow
+    subgraph AI["AI Guardian Service"]
+        A4[System Events Trigger] --> B4[AI Guardian Activation]
+        B4 --> B4_1{Premium User?}
+        B4_1 -->|No| B4_2[Limited Analysis]
+        B4_1 -->|Yes| C4[Full AI Analysis]
+        
+        C4 --> C4_1[Multi-Source Data Collection]
+        C4_1 --> C4_2[SMS Messages Analysis]
+        C4_1 --> C4_3[File Activity Monitoring]
+        C4_1 --> C4_4[Network Traffic Analysis]
+        C4_1 --> C4_5[App Behavior Monitoring]
+        
+        C4_2 --> D4[ML Model Processing]
+        C4_3 --> D4
+        C4_4 --> D4
+        C4_5 --> D4
+        
+        D4 --> D4_1[Pattern Recognition Engine]
+        D4_1 --> D4_2[Anomaly Detection]
+        D4_2 --> D4_3[Threat Intelligence Correlation]
+        D4_3 --> D4_4[Risk Assessment Matrix]
+        
+        D4_4 --> E4{Threat Level Analysis}
+        E4 -->|Low Risk| E4_1[Background Logging]
+        E4 -->|Medium Risk| E4_2[User Notification]
+        E4 -->|High Risk| E4_3[Immediate Alert]
+        E4 -->|Critical Risk| E4_4[Auto-Response Triggered]
+        
+        E4_4 --> F4[Automated Protection Measures]
+        F4 --> F4_1[Block Suspicious Activity]
+        F4_1 --> F4_2[Isolate Threats]
+        F4_2 --> F4_3[Generate Incident Report]
+        
+        E4_3 --> G4[High Priority Alert]
+        G4 --> G4_1[Detailed Threat Analysis]
+        G4_1 --> G4_2[Recommended Actions]
+        
+        E4_2 --> H4[Standard Security Notification]
+        H4 --> H4_1[Activity Summary]
+        
+        E4_1 --> I4[Security Event Log]
+        I4 --> J4[Pattern Learning Update]
+        
+        F4_3 --> K4[Security Dashboard Update]
+        G4_2 --> K4
+        H4_1 --> K4
+        J4 --> K4
+    end
+
+    %% Clipboard Monitor Service Flow
+    subgraph CM["Clipboard Monitor Service"]
+        A5[App Startup] --> B5[Clipboard Monitor Initialize]
+        B5 --> B5_1{Premium User?}
+        B5_1 -->|No| B5_2[Manual Scan Only]
+        B5_1 -->|Yes| C5[Auto-Monitor Active]
+        
+        C5 --> C5_1[Clipboard Change Detection]
+        C5_1 --> C5_2{Content Changed?}
+        C5_2 -->|No| C5_1
+        C5_2 -->|Yes| D5[Extract Clipboard Content]
+        
+        D5 --> D5_1[Content Type Analysis]
+        D5_1 --> D5_2{Contains URL?}
+        D5_2 -->|No| D5_3[Skip Processing]
+        D5_2 -->|Yes| E5[URL Extraction]
+        
+        E5 --> E5_1[URL Validation]
+        E5_1 --> E5_2{Valid URL?}
+        E5_2 -->|No| E5_3[Log Invalid URL]
+        E5_2 -->|Yes| F5[Automatic URL Scan]
+        
+        F5 --> F5_1[Link Scanner Service Call]
+        F5_1 --> F5_2[Security Analysis]
+        F5_2 --> F5_3{Threat Detected?}
+        F5_3 -->|No| F5_4[Safe URL Logged]
+        F5_3 -->|Yes| G5[Threat Alert Generation]
+        
+        G5 --> G5_1[High Priority Notification]
+        G5_1 --> G5_2[Clipboard Warning]
+        G5_2 --> G5_3{User Action}
+        G5_3 -->|Clear Clipboard| G5_4[Secure Clipboard Clear]
+        G5_3 -->|Keep URL| G5_5[User Risk Acknowledgment]
+        G5_3 -->|Report Threat| G5_6[Threat Database Report]
+        
+        F5_4 --> H5[Update Clipboard Stats]
+        G5_4 --> H5
+        G5_5 --> H5
+        G5_6 --> H5
+        
+        B5_2 --> I5[Manual Scan Button]
+        I5 --> I5_1[User-Triggered Scan]
+        I5_1 --> E5
+        
+        D5_3 --> C5_1
+        E5_3 --> C5_1
+        H5 --> C5_1
+    end
+
+    %% Link Scanner Service Flow
+    subgraph LS["Link Scanner Service"]
+        A6[User Enters URL] --> B6[URL Validation]
+        B6 --> B6_1{Valid URL Format?}
+        B6_1 -->|No| B6_2[Show Error Message]
+        B6_1 -->|Yes| C6[Initialize Link Scanner]
+        
+        C6 --> C6_1[Sanitize URL Input]
+        C6_1 --> C6_2[Check URL Protocol]
+        C6_2 --> C6_3{HTTPS/HTTP?}
+        C6_3 -->|Invalid| C6_4[Security Warning]
+        C6_3 -->|Valid| D6[Google Safe Browsing API]
+        
+        D6 --> D6_1[Prepare API Request]
+        D6_1 --> D6_2[Send Threat Lookup]
+        D6_2 --> D6_3[Receive API Response]
+        D6_3 --> D6_4{API Status}
+        D6_4 -->|Error| D6_5[Fallback Local Analysis]
+        D6_4 -->|Success| E6[Parse Threat Data]
+        
+        E6 --> E6_1{Threat Found?}
+        E6_1 -->|No Threats| E6_2[Mark as Safe]
+        E6_1 -->|Threats Found| E6_3[Extract Threat Details]
+        
+        E6_2 --> F6[Generate Safe Result]
+        E6_3 --> F6_1[Generate Danger Result]
+        
+        F6 --> G6[Show Scan Result]
+        F6_1 --> G6
+        
+        G6 --> H6[Update URL Statistics]
+        H6 --> I6[Save Scan History]
+        I6 --> J6{Dangerous URL?}
+        J6 -->|Yes| K6[Send High Priority Alert]
+        J6 -->|No| L6[Update Activity Feed]
+        
+        D6_5 --> D6_6[Local Blacklist Check]
+        D6_6 --> D6_7[Heuristic Analysis]
+        D6_7 --> E6_1
+    end
+
+    %% Styling for better visualization
+    classDef documentScanner fill:#E8F5E8,stroke:#388E3C,stroke-width:2px
+    classDef smsShield fill:#FFF3E0,stroke:#F57C00,stroke-width:2px
+    classDef qrScanner fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    classDef aiGuardian fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+    classDef clipboardMonitor fill:#EFEBE9,stroke:#5D4037,stroke-width:2px
+    classDef linkScanner fill:#FDE7F3,stroke:#C2185B,stroke-width:2px
+    
+    class DS documentScanner
+    class SS smsShield
+    class QS qrScanner
+    class AI aiGuardian
+    class CM clipboardMonitor
+    class LS linkScanner

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shabari Protection Admin Dashboard - Supabase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <div id="app" class="min-h-screen">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-purple-600">
+            <div class="bg-white p-8 rounded-lg shadow-2xl w-96">
+                <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">
+                    <i class="fas fa-shield-alt text-blue-500 mr-2"></i>
+                    Shabari Admin
+                </h1>
+                <form id="loginForm">
+                    <input type="email" id="email" placeholder="Email" required
+                        class="w-full px-4 py-2 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" id="password" placeholder="Password" required
+                        class="w-full px-4 py-2 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" 
+                        class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
+                        Sign In
+                    </button>
+                </form>
+                <div id="loginError" class="mt-4 text-red-500 text-sm hidden"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <!-- Navigation -->
+            <nav class="bg-white shadow-lg">
+                <div class="container mx-auto px-6 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt text-blue-500 text-2xl mr-3"></i>
+                            <span class="font-bold text-xl">Shabari Protection Admin</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span id="userEmail" class="text-gray-600"></span>
+                            <button onclick="signOut()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Tabs -->
+            <div class="container mx-auto px-6 mt-6">
+                <div class="flex space-x-1 bg-gray-200 p-1 rounded-lg">
+                    <button onclick="switchTab('overview')" class="tab-btn active" data-tab="overview">
+                        <i class="fas fa-chart-line mr-2"></i>Overview
+                    </button>
+                    <button onclick="switchTab('threats')" class="tab-btn" data-tab="threats">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Threats
+                    </button>
+                    <button onclick="switchTab('reports')" class="tab-btn" data-tab="reports">
+                        <i class="fas fa-flag mr-2"></i>Reports
+                    </button>
+                    <button onclick="switchTab('seed')" class="tab-btn" data-tab="seed">
+                        <i class="fas fa-database mr-2"></i>Seed Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Areas -->
+            <div class="container mx-auto px-6 mt-6">
+                <!-- Overview Tab -->
+                <div id="overviewTab" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 rounded-full p-3 mr-4">
+                                    <i class="fas fa-globe text-blue-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Domains</p>
+                                    <p class="text-2xl font-bold" id="totalDomains">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center">
+                                <div class="bg-green-100 rounded-full p-3 mr-4">
+                                    <i class="fas fa-phone text-green-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Phone Numbers</p>
+                                    <p class="text-2xl font-bold" id="totalPhones">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center">
+                                <div class="bg-yellow-100 rounded-full p-3 mr-4">
+                                    <i class="fas fa-network-wired text-yellow-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">IP Ranges</p>
+                                    <p class="text-2xl font-bold" id="totalIps">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center">
+                                <div class="bg-red-100 rounded-full p-3 mr-4">
+                                    <i class="fas fa-flag text-red-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-sm">Reports Today</p>
+                                    <p class="text-2xl font-bold" id="reportsToday">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Threat Categories</h3>
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Reports Over Time</h3>
+                            <canvas id="reportsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Threats Tab -->
+                <div id="threatsTab" class="tab-content hidden">
+                    <div class="bg-white rounded-lg shadow">
+                        <div class="p-6 border-b">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-xl font-semibold">Active Threats</h2>
+                                <select id="threatFilter" onchange="filterThreats()" 
+                                    class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="all">All Types</option>
+                                    <option value="domain">Domains</option>
+                                    <option value="phone">Phone Numbers</option>
+                                    <option value="ip">IP Addresses</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reports</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="threatsTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Threats will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div id="reportsTab" class="tab-content hidden">
+                    <div class="bg-white rounded-lg shadow">
+                        <div class="p-6 border-b">
+                            <h2 class="text-xl font-semibold">Recent Reports</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Reports will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seed Data Tab -->
+                <div id="seedTab" class="tab-content hidden">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-xl font-semibold mb-4">Add Seed Data</h2>
+                        <form id="seedForm" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                                    <select id="seedType" required
+                                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="domain">Domain</option>
+                                        <option value="phone">Phone Number</option>
+                                        <option value="ip">IP Address/Range</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                                    <select id="seedCategory" required
+                                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="phishing">Phishing</option>
+                                        <option value="malware">Malware</option>
+                                        <option value="scam">Scam</option>
+                                        <option value="spam">Spam</option>
+                                        <option value="fraud_call">Fraud Call</option>
+                                        <option value="premium_rate">Premium Rate</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Value</label>
+                                <input type="text" id="seedValue" required placeholder="Enter domain, phone, or IP"
+                                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea id="seedDescription" rows="3" placeholder="Brief description of the threat"
+                                    class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Severity (0-100)</label>
+                                <input type="range" id="seedSeverity" min="0" max="100" value="80"
+                                    class="w-full" oninput="updateSeverityLabel()">
+                                <span id="severityLabel" class="text-sm text-gray-600">80</span>
+                            </div>
+                            <button type="submit" 
+                                class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+                                <i class="fas fa-plus mr-2"></i>Add Seed Entry
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase-dashboard.js"></script>
+</body>
+</html>

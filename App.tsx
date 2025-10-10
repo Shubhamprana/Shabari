@@ -1,9 +1,29 @@
 import { NavigationContainer } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// Initialize Sentry for error tracking
+Sentry.init({
+  dsn: 'https://c94323cf65bd708ab23fd80f73cd198f@o4510115417817088.ingest.de.sentry.io/4510115458449488',
+  environment: __DEV__ ? 'development' : 'production',
+  enableInExpoDevelopment: true,
+  debug: __DEV__,
+  // Privacy: Exclude sensitive data
+  beforeSend: (event) => {
+    // Don't send SMS content or personal data
+    if (event.exception?.values?.[0]?.value?.includes('SMS')) {
+      return null; // Block this event
+    }
+    return event;
+  },
+  // Performance monitoring
+  enableTracing: true,
+  tracesSampleRate: 0.1,
+});
 
 // Import stores
 import { useSubscriptionStore } from './src/stores/subscriptionStore';
@@ -18,6 +38,7 @@ import { URLProtectionCallbacks, urlProtectionService } from './src/services/URL
 import { WatchdogCallbacks } from './src/services/WatchdogFileService';
 
 // Import screens
+import AppErrorBoundary from './src/AppErrorBoundary';
 import { supabase } from './src/lib/supabase';
 import AppNavigator from './src/navigation/AppNavigator';
 import LoginScreen from './src/screens/LoginScreen';
@@ -238,9 +259,11 @@ const App: React.FC = () => {
     const initializeApp = async () => {
       try {
         console.log('🚀 App: Starting initialization...');
+        Sentry.addBreadcrumb({ message: 'App initialization started' });
         
         // Check existing authentication
         await checkAuth();
+        console.log('✅ App: Authentication check completed');
         
         // Handle deep links
         const handleDeepLink = async (url: string) => {
@@ -300,6 +323,7 @@ const App: React.FC = () => {
         });
 
         console.log('✅ App: Initialization complete');
+        Sentry.addBreadcrumb({ message: 'App initialization completed successfully' });
         setIsInitializing(false);
 
         return () => {
@@ -307,11 +331,22 @@ const App: React.FC = () => {
         };
       } catch (error) {
         console.error('❌ App initialization error:', error);
+        Sentry.captureException(error, { tags: { component: 'App', function: 'initializeApp' } });
+        // Don't let initialization errors block the app
         setIsInitializing(false);
       }
     };
 
-    initializeApp();
+    // Add a safety timeout to prevent infinite loading
+    const initTimeout = setTimeout(() => {
+      console.warn('⚠️ App initialization timeout - forcing completion');
+      Sentry.addBreadcrumb({ message: 'App initialization timeout' });
+      setIsInitializing(false);
+    }, 10000); // 10 second timeout
+
+    initializeApp().finally(() => {
+      clearTimeout(initTimeout);
+    });
   }, [checkAuth]);
 
   // Enhanced URL handling for different platforms
@@ -346,15 +381,18 @@ const App: React.FC = () => {
   }, []);
 
   const initializeServices = async (): Promise<void> => {
-    const status: ServiceStatus = {
-      scannerService: false,
-      shareIntentService: false,
-      globalGuardService: false,
-      clipboardMonitor: false,
-      urlProtection: false,
-      watchdogFileService: false,
-      privacyGuardService: false,
-    };
+    try {
+      Sentry.addBreadcrumb({ message: 'Starting service initialization' });
+      
+      const status: ServiceStatus = {
+        scannerService: false,
+        shareIntentService: false,
+        globalGuardService: false,
+        clipboardMonitor: false,
+        urlProtection: false,
+        watchdogFileService: false,
+        privacyGuardService: false,
+      };
 
     // Skip native services in Expo Go and Web
     if (isExpoGo || isWeb) {
@@ -414,8 +452,14 @@ const App: React.FC = () => {
       
       const result = await initializeWithTimeout(
         async () => {
-          shareIntentService.initialize(shareIntentCallbacks);
-          return shareIntentService.isServiceInitialized();
+          try {
+            shareIntentService.initialize(shareIntentCallbacks);
+            return shareIntentService.isServiceInitialized();
+          } catch (deepLinkError) {
+            console.warn('⚠️ Deep linking not available in this build:', deepLinkError);
+            // Continue without deep linking functionality
+            return false;
+          }
         },
         'Share Intent Service',
         2000
@@ -426,7 +470,7 @@ const App: React.FC = () => {
       if (status.shareIntentService) {
         console.log('✅ Share Intent Service initialized successfully');
       } else {
-        console.log('⚠️ Share Intent Service initialized with limited functionality');
+        console.log('⚠️ Share Intent Service initialized with limited functionality (no deep linking)');
       }
     } catch (error) {
       console.error('❌ Share Intent Service initialization failed:', error);
@@ -697,66 +741,92 @@ const App: React.FC = () => {
       WatchdogFile: status.watchdogFileService ? '✅' : '❌',
       PrivacyGuard: status.privacyGuardService ? '✅' : '❌',
     });
+    
+    Sentry.addBreadcrumb({ message: 'Service initialization completed' });
+  } catch (error) {
+    Sentry.captureException(error, { 
+      tags: { component: 'App' },
+      extra: { function: 'initializeServices' }
+    });
+    console.error('❌ Service initialization error:', error);
+  }
   };
 
   // Show loading screen during initialization
   if (isInitializing || !sessionInitialized) {
+    console.log('🔄 App: Showing loading screen', { isInitializing, sessionInitialized, isLoading });
+    Sentry.addBreadcrumb({ 
+      message: 'Loading screen displayed', 
+      data: { isInitializing, sessionInitialized, isLoading } 
+    });
+    
     return (
-      <SafeAreaProvider>
-        <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
-        <View style={{ 
-          flex: 1, 
-          backgroundColor: '#1a1a2e', 
-          justifyContent: 'center', 
-          alignItems: 'center' 
-        }}>
-          <ActivityIndicator size="large" color="#ff6b6b" />
-          <Text style={{ 
-            color: '#ffffff', 
-            marginTop: 20, 
-            fontSize: 16 
+      <AppErrorBoundary>
+        <SafeAreaProvider>
+          <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
+          <View style={{ 
+            flex: 1, 
+            backgroundColor: '#1a1a2e', 
+            justifyContent: 'center', 
+            alignItems: 'center' 
           }}>
-            Initializing Shabari...
-          </Text>
-        </View>
-      </SafeAreaProvider>
+            <ActivityIndicator size="large" color="#ff6b6b" />
+            <Text style={{ 
+              color: '#ffffff', 
+              marginTop: 20, 
+              fontSize: 16 
+            }}>
+              Initializing Shabari...
+            </Text>
+            <Text style={{ 
+              color: '#888888', 
+              marginTop: 10, 
+              fontSize: 12 
+            }}>
+              {isInitializing ? 'App starting...' : 'Checking authentication...'}
+            </Text>
+          </View>
+        </SafeAreaProvider>
+      </AppErrorBoundary>
     );
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
-      
-      {/* Show login screen if not authenticated */}
-      {!isAuthenticated ? (
-        <LoginScreen onLoginSuccess={() => {
-          console.log('✅ App: Login success callback received');
-        }} />
-      ) : (
-        <NavigationContainer
-          linking={{
-            prefixes: [prefix, 'shabari://'],
-            config: {
-              screens: {
-                Dashboard: 'dashboard',
-                Scanner: 'scanner',
-                QRScanner: 'qr-scanner',
-                Settings: 'settings',
-                // Auth screens
-                AuthCallback: 'auth/callback',
-                ResetPassword: 'auth/reset-password',
+    <AppErrorBoundary>
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
+        
+        {/* Show login screen if not authenticated */}
+        {!isAuthenticated ? (
+          <LoginScreen onLoginSuccess={() => {
+            console.log('✅ App: Login success callback received');
+          }} />
+        ) : (
+          <NavigationContainer
+            linking={{
+              prefixes: [prefix, 'shabari://'],
+              config: {
+                screens: {
+                  Dashboard: 'dashboard',
+                  Scanner: 'scanner',
+                  QRScanner: 'qr-scanner',
+                  Settings: 'settings',
+                  // Auth screens
+                  AuthCallback: 'auth/callback',
+                  ResetPassword: 'auth/reset-password',
+                },
               },
-            },
-          }}
-        >
-      <AppNavigator />
-    </NavigationContainer>
-      )}
-    </SafeAreaProvider>
+            }}
+          >
+        <AppNavigator />
+      </NavigationContainer>
+        )}
+      </SafeAreaProvider>
+    </AppErrorBoundary>
   );
 };
 
-export default App;
+export default Sentry.wrap(App);
 
 const styles = StyleSheet.create({
   container: {

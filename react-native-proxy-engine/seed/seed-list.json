@@ -1,0 +1,430 @@
+{
+  "domains": [
+    {
+      "value": "phishing-paypal-secure.tk",
+      "category": "phishing",
+      "severity": 100,
+      "description": "PayPal phishing site"
+    },
+    {
+      "value": "amazon-refund-2024.ml",
+      "category": "phishing",
+      "severity": 100,
+      "description": "Amazon phishing scam"
+    },
+    {
+      "value": "facebook-verify-account.ga",
+      "category": "phishing",
+      "severity": 100,
+      "description": "Facebook account verification scam"
+    },
+    {
+      "value": "google-security-alert.cf",
+      "category": "phishing",
+      "severity": 100,
+      "description": "Google security phishing"
+    },
+    {
+      "value": "crypto-giveaway-elon.top",
+      "category": "scam",
+      "severity": 100,
+      "description": "Cryptocurrency giveaway scam"
+    },
+    {
+      "value": "malware-download-site.ru",
+      "category": "malware",
+      "severity": 100,
+      "description": "Known malware distribution site"
+    },
+    {
+      "value": "ransomware-decrypt.onion",
+      "category": "malware",
+      "severity": 100,
+      "description": "Ransomware payment site"
+    },
+    {
+      "value": "fake-antivirus-2024.com",
+      "category": "malware",
+      "severity": 95,
+      "description": "Fake antivirus software"
+    },
+    {
+      "value": "tech-support-scam.in",
+      "category": "scam",
+      "severity": 90,
+      "description": "Tech support scam site"
+    },
+    {
+      "value": "lottery-winner-notification.ng",
+      "category": "scam",
+      "severity": 95,
+      "description": "Lottery scam site"
+    },
+    {
+      "value": "doubleclick.net",
+      "category": "tracker",
+      "severity": 30,
+      "description": "Google advertising tracker"
+    },
+    {
+      "value": "facebook-analytics.com",
+      "category": "tracker",
+      "severity": 30,
+      "description": "Facebook tracking pixel"
+    },
+    {
+      "value": "google-analytics.com",
+      "category": "tracker",
+      "severity": 25,
+      "description": "Google Analytics tracking"
+    },
+    {
+      "value": "scorecardresearch.com",
+      "category": "tracker",
+      "severity": 30,
+      "description": "ComScore tracking"
+    },
+    {
+      "value": "quantserve.com",
+      "category": "tracker",
+      "severity": 30,
+      "description": "Quantcast tracking"
+    },
+    {
+      "value": "ads.twitter.com",
+      "category": "ads",
+      "severity": 20,
+      "description": "Twitter advertising"
+    },
+    {
+      "value": "pagead2.googlesyndication.com",
+      "category": "ads",
+      "severity": 20,
+      "description": "Google AdSense"
+    },
+    {
+      "value": "amazon-adsystem.com",
+      "category": "ads",
+      "severity": 20,
+      "description": "Amazon advertising"
+    },
+    {
+      "value": "adultsiteexample.xxx",
+      "category": "adult",
+      "severity": 40,
+      "description": "Adult content site"
+    },
+    {
+      "value": "torrentdownload.pirate",
+      "category": "piracy",
+      "severity": 50,
+      "description": "Torrent piracy site"
+    },
+    {
+      "value": "casino-online-bet.com",
+      "category": "gambling",
+      "severity": 35,
+      "description": "Online gambling site"
+    },
+    {
+      "value": "cryptominer-hidden.js",
+      "category": "cryptominer",
+      "severity": 80,
+      "description": "Hidden cryptocurrency miner"
+    },
+    {
+      "value": "coinhive.com",
+      "category": "cryptominer",
+      "severity": 80,
+      "description": "Browser-based crypto mining"
+    },
+    {
+      "value": "virus-removal-tool.exe",
+      "category": "malware",
+      "severity": 100,
+      "description": "Fake virus removal tool"
+    },
+    {
+      "value": "bank-update-required.ph",
+      "category": "phishing",
+      "severity": 100,
+      "description": "Banking phishing site"
+    }
+  ],
+  "ips": [
+    {
+      "value": "192.0.2.0/24",
+      "category": "test",
+      "severity": 10,
+      "description": "TEST-NET-1 (RFC 5737)"
+    },
+    {
+      "value": "198.51.100.0/24",
+      "category": "test",
+      "severity": 10,
+      "description": "TEST-NET-2 (RFC 5737)"
+    },
+    {
+      "value": "203.0.113.0/24",
+      "category": "test",
+      "severity": 10,
+      "description": "TEST-NET-3 (RFC 5737)"
+    },
+    {
+      "value": "10.0.0.0/8",
+      "category": "private",
+      "severity": 5,
+      "description": "Private network range"
+    },
+    {
+      "value": "172.16.0.0/12",
+      "category": "private",
+      "severity": 5,
+      "description": "Private network range"
+    },
+    {
+      "value": "192.168.0.0/16",
+      "category": "private",
+      "severity": 5,
+      "description": "Private network range"
+    },
+    {
+      "value": "185.220.100.0/24",
+      "category": "tor",
+      "severity": 60,
+      "description": "Known Tor exit node range"
+    },
+    {
+      "value": "104.21.0.0/16",
+      "category": "cdn",
+      "severity": 10,
+      "description": "Cloudflare CDN range"
+    },
+    {
+      "value": "31.13.64.0/18",
+      "category": "social",
+      "severity": 15,
+      "description": "Facebook IP range"
+    },
+    {
+      "value": "45.33.0.0/16",
+      "category": "vpn",
+      "severity": 30,
+      "description": "Known VPN provider range"
+    },
+    {
+      "value": "23.234.0.0/16",
+      "category": "malware",
+      "severity": 90,
+      "description": "Known malware C&C range"
+    },
+    {
+      "value": "91.218.67.0/24",
+      "category": "botnet",
+      "severity": 95,
+      "description": "Known botnet C&C"
+    },
+    {
+      "value": "185.159.158.0/24",
+      "category": "phishing",
+      "severity": 85,
+      "description": "Phishing server range"
+    },
+    {
+      "value": "94.142.241.0/24",
+      "category": "spam",
+      "severity": 70,
+      "description": "Known spam source"
+    },
+    {
+      "value": "193.169.255.0/24",
+      "category": "scanner",
+      "severity": 50,
+      "description": "Known port scanner range"
+    }
+  ],
+  "phones": [
+    {
+      "value": "+234-800-123-4567",
+      "category": "known_scam",
+      "severity": 100,
+      "description": "Nigerian prince scam"
+    },
+    {
+      "value": "+91-900-555-1234",
+      "category": "tech_support_scam",
+      "severity": 95,
+      "description": "Fake Microsoft tech support"
+    },
+    {
+      "value": "1-900-555-0100",
+      "category": "premium_rate",
+      "severity": 80,
+      "description": "Premium rate number"
+    },
+    {
+      "value": "+44-70-1234-5678",
+      "category": "personal_number",
+      "severity": 60,
+      "description": "UK personal number (often misused)"
+    },
+    {
+      "value": "+86-400-123-4567",
+      "category": "fraud_call",
+      "severity": 85,
+      "description": "Chinese fraud call center"
+    },
+    {
+      "value": "+1-876-555-0123",
+      "category": "robocall",
+      "severity": 70,
+      "description": "Jamaican lottery scam"
+    },
+    {
+      "value": "+62-21-5555-1234",
+      "category": "spam",
+      "severity": 60,
+      "description": "Indonesian spam caller"
+    },
+    {
+      "value": "+92-300-123-4567",
+      "category": "fraud_call",
+      "severity": 75,
+      "description": "Pakistani fraud number"
+    },
+    {
+      "value": "+7-495-555-0100",
+      "category": "spam",
+      "severity": 65,
+      "description": "Russian spam caller"
+    },
+    {
+      "value": "+63-2-8888-1234",
+      "category": "phishing",
+      "severity": 80,
+      "description": "Philippines phishing call"
+    },
+    {
+      "value": "1-809-555-0123",
+      "category": "premium_rate",
+      "severity": 85,
+      "description": "Dominican Republic premium"
+    },
+    {
+      "value": "1-649-555-0100",
+      "category": "premium_rate",
+      "severity": 85,
+      "description": "Turks & Caicos premium"
+    },
+    {
+      "value": "+225-07-123-4567",
+      "category": "wangiri",
+      "severity": 90,
+      "description": "Ivory Coast wangiri scam"
+    },
+    {
+      "value": "+381-60-555-1234",
+      "category": "wangiri",
+      "severity": 90,
+      "description": "Serbia wangiri scam"
+    },
+    {
+      "value": "+371-900-12345",
+      "category": "premium_rate",
+      "severity": 80,
+      "description": "Latvia premium rate"
+    },
+    {
+      "value": "+252-90-712-3456",
+      "category": "fraud_call",
+      "severity": 95,
+      "description": "Somalia fraud number"
+    },
+    {
+      "value": "+967-71-234-5678",
+      "category": "fraud_call",
+      "severity": 90,
+      "description": "Yemen fraud number"
+    },
+    {
+      "value": "+84-90-123-4567",
+      "category": "spam",
+      "severity": 60,
+      "description": "Vietnam spam caller"
+    },
+    {
+      "value": "+880-17-1234-5678",
+      "category": "fraud_call",
+      "severity": 75,
+      "description": "Bangladesh fraud number"
+    },
+    {
+      "value": "+213-770-123456",
+      "category": "spam",
+      "severity": 65,
+      "description": "Algeria spam caller"
+    },
+    {
+      "value": "+20-10-1234-5678",
+      "category": "phishing",
+      "severity": 70,
+      "description": "Egypt phishing call"
+    },
+    {
+      "value": "+254-700-123456",
+      "category": "fraud_call",
+      "severity": 80,
+      "description": "Kenya fraud number"
+    },
+    {
+      "value": "+27-82-123-4567",
+      "category": "spam",
+      "severity": 60,
+      "description": "South Africa spam"
+    },
+    {
+      "value": "+55-11-9-1234-5678",
+      "category": "robocall",
+      "severity": 65,
+      "description": "Brazil robocall"
+    },
+    {
+      "value": "+52-55-1234-5678",
+      "category": "spam",
+      "severity": 60,
+      "description": "Mexico spam caller"
+    }
+  ],
+  "apps": [
+    {
+      "value": "com.fake.antivirus",
+      "category": "malware",
+      "severity": 100,
+      "description": "Fake antivirus app"
+    },
+    {
+      "value": "com.scam.cryptowallet",
+      "category": "scam",
+      "severity": 95,
+      "description": "Fake crypto wallet"
+    },
+    {
+      "value": "com.phishing.banking",
+      "category": "phishing",
+      "severity": 100,
+      "description": "Fake banking app"
+    },
+    {
+      "value": "com.spyware.keyboard",
+      "category": "spyware",
+      "severity": 90,
+      "description": "Keylogger disguised as keyboard"
+    },
+    {
+      "value": "com.adware.flashlight",
+      "category": "adware",
+      "severity": 60,
+      "description": "Flashlight app with excessive ads"
+    }
+  ]
+}

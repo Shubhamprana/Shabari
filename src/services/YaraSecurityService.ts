@@ -18,6 +18,7 @@ interface YaraEngine {
   scanFile(filePath: string): Promise<YaraScanResult>;
   getEngineVersion(): Promise<string>;
   getLoadedRulesCount(): Promise<number>;
+  isNativeEngineAvailable?(): Promise<boolean>;
   _engineType?: string;
   _isNative?: boolean;
 }

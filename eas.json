@@ -34,15 +34,15 @@
       "android": {
         "buildType": "app-bundle",
         "image": "latest",
-        "node": "20.18.0",
+        "node": "20.19.4",
         "cache": {
           "disabled": true
         },
         "env": {
           "NODE_ENV": "production",
           "EXPO_PUBLIC_ENVIRONMENT": "production",
-          "GRADLE_OPTS": "-Xmx4g -XX:MaxMetaspaceSize=512m",
-          "JAVA_OPTS": "-Xmx4g"
+          "GRADLE_OPTS": "-Xmx6g -XX:MaxMetaspaceSize=1g",
+          "JAVA_OPTS": "-Xmx6g"
         }
       }
     },
@@ -50,7 +50,7 @@
       "android": {
         "buildType": "app-bundle",
         "image": "latest",
-        "node": "20.18.0",
+        "node": "20.19.4",
         "env": {
           "NODE_ENV": "production",
           "EXPO_PUBLIC_ENVIRONMENT": "production"
@@ -62,11 +62,18 @@
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease",
         "image": "latest",
-        "node": "20.18.0",
+        "node": "20.19.4",
+        "cache": {
+          "disabled": true
+        },
         "env": {
           "ANDROID_NDK_HOME": "/opt/android-sdk-linux/ndk/25.1.8937393",
           "NODE_ENV": "production",
-          "EXPO_PUBLIC_ENVIRONMENT": "production"
+          "EXPO_PUBLIC_ENVIRONMENT": "production",
+          "SENTRY_DSN": "https://c94323cf65bd708ab23fd80f73cd198f@o4510115417817088.ingest.de.sentry.io/4510115458449488",
+          "GRADLE_OPTS": "-Xmx6g -XX:MaxMetaspaceSize=1g",
+          "JAVA_OPTS": "-Xmx6g",
+          "EAS_SKIP_AUTO_FINGERPRINT": "1"
         }
       }
     },
@@ -75,7 +82,7 @@
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease",
         "image": "latest",
-        "node": "20.18.0",
+        "node": "20.19.4",
         "cache": {
           "disabled": true
         },

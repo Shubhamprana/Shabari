@@ -1,0 +1,65 @@
+{
+  "name": "react-native-proxy-engine",
+  "version": "1.0.0",
+  "description": "Kotlin-based proxy server engine for React Native",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "expo": {
+    "plugin": "./app.plugin.js"
+  },
+  "scripts": {
+    "build": "react-native run-android",
+    "build:android": "node scripts/build-android.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:all": "node scripts/test.js",
+    "lint": "eslint index.js __tests__/ example/",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build:android",
+    "example": "cd example && npm install && npx react-native run-android"
+  },
+  "keywords": [
+    "react-native",
+    "proxy",
+    "server",
+    "kotlin",
+    "android",
+    "networking"
+  ],
+  "author": "Shabari Security Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react-native": ">=0.60.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@babel/eslint-parser": "^7.20.0",
+    "@babel/preset-react": "^7.20.0",
+    "@react-native-community/eslint-config": "^3.0.0",
+    "@react-native/babel-preset": "^0.81.1",
+    "@types/react-native": "^0.72.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "metro-react-native-babel-preset": "^0.76.9",
+    "prettier": "^2.8.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "app.plugin.js",
+    "react-native.config.js",
+    "android/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shabari-security/react-native-proxy-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shabari-security/react-native-proxy-engine/issues"
+  },
+  "homepage": "https://github.com/shabari-security/react-native-proxy-engine#readme"
+}

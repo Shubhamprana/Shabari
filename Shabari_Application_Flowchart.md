@@ -1,0 +1,286 @@
+# 🛡️ Shabari Cybersecurity Application - Comprehensive Flowchart
+
+## Application Overview
+**Shabari (शबरी)** is a comprehensive cybersecurity application for mobile devices that provides multi-layered protection against digital threats. The app is named after the devotee Shabari, symbolizing careful examination and protection of every digital interaction.
+
+## Complete Application Flow Diagram
+
+```mermaid
+graph TD
+    %% User Entry Points
+    A[User Opens App] --> B{Is User<br/>Authenticated?}
+    B -->|No| C[Onboarding Screen]
+    B -->|Yes| D[Dashboard Screen]
+    
+    %% Onboarding Flow
+    C --> C1[Welcome Slide 1]
+    C1 --> C2[Features Slide 2]
+    C2 --> C3[Security Slide 3]
+    C3 --> C4[Login/Signup Screen]
+    C4 --> C5{Authentication<br/>Method}
+    C5 -->|Email/Password| C6[Email Authentication]
+    C5 -->|Google OAuth| C7[Google Sign-In]
+    C6 --> C8[Supabase Authentication]
+    C7 --> C8
+    C8 --> C9{Success?}
+    C9 -->|Yes| D
+    C9 -->|No| C4
+    
+    %% Dashboard Features
+    D --> D1[Security Overview Stats]
+    D --> D2[Core Security Suite]
+    D --> D3[Premium Features Section]
+    D --> D4[Recent Activity Feed]
+    D --> D5[Settings Access]
+    
+    %% Core Security Features - Always Available
+    D2 --> E1[Document Scanner]
+    D2 --> E2[Link Detection]
+    D2 --> E3[QR Scanner]
+    
+    %% Document Scanner Flow
+    E1 --> E1A{File Source}
+    E1A -->|Camera| E1B[Camera Capture]
+    E1A -->|Gallery| E1C[Image Gallery]
+    E1A -->|Documents| E1D[File Picker]
+    E1B --> E1E[Native File Scanner]
+    E1C --> E1E
+    E1D --> E1E
+    E1E --> E1F[YARA Security Engine]
+    E1F --> E1G[Threat Analysis]
+    E1G --> E1H[Photo Fraud Detection]
+    E1H --> E1I[Scan Result Screen]
+    
+    %% Link Detection Flow
+    E2 --> E2A[URL Input Modal]
+    E2A --> E2B[URL Validation]
+    E2B --> E2C[Link Scanner Service]
+    E2C --> E2D[Google Safe Browsing API]
+    E2D --> E2E[Threat Database Check]
+    E2E --> E2F[Scan Result Screen]
+    
+    %% QR Scanner Flow
+    E3 --> E3A[Live QR Scanner Screen]
+    E3A --> E3B[Camera Permission Check]
+    E3B --> E3C[QR Code Detection]
+    E3C --> E3D[Content Analysis]
+    E3D --> E3E{Content Type}
+    E3E -->|URL| E3F[URL Security Check]
+    E3E -->|Text| E3G[Text Analysis]
+    E3E -->|WiFi| E3H[WiFi Security Check]
+    E3F --> E3I[Result Display]
+    E3G --> E3I
+    E3H --> E3I
+    
+    %% Premium Features - Subscription Required
+    D3 --> F1{Is Premium<br/>User?}
+    F1 -->|No| F2[Premium Upgrade Modal]
+    F1 -->|Yes| F3[Premium Feature Access]
+    
+    F3 --> F4[SMS Shield]
+    F3 --> F5[Secure Browser]
+    F3 --> F6[AI Guardian]
+    F3 --> F7[App Installation Monitor]
+    F3 --> F8[Network Protection]
+    F3 --> F9[File Watchdog]
+    
+    %% SMS Shield Flow
+    F4 --> F4A[SMS Reader Service]
+    F4A --> F4B[OTP Insight Service]
+    F4B --> F4C[Sender Verification]
+    F4C --> F4D[ML Integration Service]
+    F4D --> F4E[Fraud Detection]
+    F4E --> F4F[Notification Service]
+    
+    %% Secure Browser Flow
+    F5 --> F5A[Secure Browser Screen]
+    F5A --> F5B[URL Protection Service]
+    F5B --> F5C[Real-time Scanning]
+    F5C --> F5D[Content Filtering]
+    F5D --> F5E[Safe Browsing]
+    
+    %% AI Guardian Flow
+    F6 --> F6A[OTP Insight Service]
+    F6A --> F6B[ML Model Analysis]
+    F6B --> F6C[Pattern Recognition]
+    F6C --> F6D[Threat Intelligence]
+    F6D --> F6E[Auto Response]
+    
+    %% Background Services
+    G1[Auto Initialization Service] --> G2[Service Startup]
+    G2 --> G3[Notification Service]
+    G2 --> G4[Clipboard Monitor]
+    G2 --> G5[Share Intent Service]
+    G2 --> G6[Global Guard Controller]
+    
+    %% Monitoring Services
+    G4 --> G4A[Clipboard URL Monitor]
+    G4A --> G4B[Auto URL Scanning]
+    G5 --> G5A[File Share Detection]
+    G5A --> G5B[Auto File Scanning]
+    G6 --> G6A[Network Traffic Monitor]
+    G6A --> G6B[Threat Blocking]
+    
+    %% Settings and Configuration
+    D5 --> H1[Settings Screen]
+    H1 --> H2[Account Management]
+    H1 --> H3[Feature Management]
+    H1 --> H4[Subscription Status]
+    H1 --> H5[Support System]
+    
+    %% Feature Management - Premium Only
+    H3 --> H3A{Is Premium?}
+    H3A -->|Yes| H3B[Feature Management Screen]
+    H3A -->|No| H3C[Upgrade Prompt]
+    H3B --> H3D[Battery Optimization]
+    H3B --> H3E[Data Usage Controls]
+    H3B --> H3F[Settings Export/Import]
+    
+    %% Quarantine System
+    I1[Threat Detection] --> I2{Is Dangerous?}
+    I2 -->|Yes| I3[Quarantine Screen]
+    I2 -->|No| I4[Safe File Access]
+    I3 --> I5[File Isolation]
+    I5 --> I6[User Action Required]
+    I6 --> I7{User Decision}
+    I7 -->|Delete| I8[Secure File Deletion]
+    I7 -->|Restore| I9[File Restoration]
+    I7 -->|Report| I10[Threat Reporting]
+    
+    %% Notification System
+    J1[Security Events] --> J2[Notification Service]
+    J2 --> J3{Event Priority}
+    J3 -->|High| J4[Immediate Alert]
+    J3 -->|Medium| J5[Standard Notification]
+    J3 -->|Low| J6[Activity Log]
+    J4 --> J7[User Action Required]
+    J5 --> J8[Dashboard Update]
+    J6 --> J9[Background Logging]
+    
+    %% Data Flow and Storage
+    K1[User Data] --> K2[Local Storage]
+    K1 --> K3[Supabase Cloud]
+    K2 --> K2A[AsyncStorage]
+    K2 --> K2B[Zustand State]
+    K3 --> K3A[Authentication Data]
+    K3 --> K3B[Scan Results]
+    K3 --> K3C[User Preferences]
+    
+    %% External API Integration
+    L1[Security APIs] --> L2[Google Safe Browsing]
+    L1 --> L3[VirusTotal API]
+    L1 --> L4[Threat Intelligence]
+    L2 --> L5[URL Threat Data]
+    L3 --> L6[File Hash Analysis]
+    L4 --> L7[Real-time Threats]
+```
+
+## Detailed Feature Breakdown
+
+### 🔐 **Authentication & Onboarding**
+- **3-slide onboarding** with app introduction and feature highlights
+- **Dual authentication** support: Email/Password and Google OAuth
+- **Supabase backend** for secure user management and data persistence
+- **Session management** with automatic login state restoration
+
+### 🛡️ **Core Security Features (Free Tier)**
+1. **Document Scanner**
+   - Camera capture, gallery selection, and document picker integration
+   - Native file scanning with YARA security engine
+   - Photo fraud detection for image files
+   - Comprehensive threat analysis and result reporting
+
+2. **Link Detection**
+   - Manual URL input with validation
+   - Google Safe Browsing API integration
+   - Real-time threat database checking
+   - Detailed security assessment results
+
+3. **QR Scanner**
+   - Live camera-based QR code detection
+   - Multi-format content analysis (URLs, text, WiFi credentials)
+   - Security verification for QR code contents
+   - Fraud detection for malicious QR codes
+
+### 💎 **Premium Features (Subscription Required)**
+1. **SMS Shield**
+   - Automated SMS monitoring and analysis
+   - OTP fraud detection with ML integration
+   - Sender verification and context analysis
+   - Real-time fraud alerts and notifications
+
+2. **Secure Browser**
+   - Protected web browsing environment
+   - Real-time URL scanning during navigation
+   - Content filtering and threat blocking
+   - Safe browsing recommendations
+
+3. **AI Guardian**
+   - Advanced ML-powered threat detection
+   - Pattern recognition for emerging threats
+   - Automated response to security incidents
+   - Intelligent threat analysis and reporting
+
+4. **Additional Premium Services**
+   - App installation monitoring
+   - Network traffic protection
+   - Automated file watchdog service
+   - Advanced privacy guard features
+
+### 🔧 **Background Services**
+- **Auto Initialization Service**: Seamless service startup and configuration
+- **Clipboard Monitor**: Automatic URL scanning from clipboard
+- **Share Intent Service**: File scanning from external app shares
+- **Global Guard Controller**: Network-level threat protection
+- **Notification Service**: Real-time security alerts and updates
+
+### ⚙️ **Settings & Management**
+- **Account management** with subscription status tracking
+- **Feature management** (Premium users only) with granular controls
+- **Battery optimization** and data usage management
+- **Settings export/import** for backup and sync across devices
+- **Support system** with comprehensive help resources
+
+### 🗂️ **Quarantine System**
+- **Threat isolation** for dangerous files and content
+- **User decision management** for quarantined items
+- **Secure deletion** and restoration capabilities
+- **Threat reporting** to security databases
+
+### 📊 **Data Management**
+- **Local storage** using AsyncStorage and Zustand state management
+- **Cloud synchronization** via Supabase for cross-device access
+- **Secure data handling** with encryption and privacy protection
+- **External API integration** with major security service providers
+
+## Security Architecture Highlights
+
+### **Multi-Layer Protection**
+- **Prevention**: Proactive scanning and blocking
+- **Detection**: Real-time threat identification
+- **Response**: Automated and manual threat handling
+- **Recovery**: Quarantine management and restoration
+
+### **API Integrations**
+- **Google Safe Browsing**: URL threat detection
+- **VirusTotal**: File hash analysis and reputation checking
+- **Custom Threat Intelligence**: Real-time threat data feeds
+- **ML Services**: Advanced pattern recognition and fraud detection
+
+### **User Experience Focus**
+- **Freemium Model**: Core features available to all users
+- **Premium Value**: Advanced automation and AI features
+- **Intuitive Interface**: Clean, modern design with clear navigation
+- **Performance Optimized**: Efficient background processing with minimal battery impact
+
+---
+
+## MSME Hackathon Submission Details
+
+**Application Name**: Shabari (शबरी) - भारतीय साइबर रक्षक  
+**Category**: Cybersecurity & Digital Protection  
+**Platform**: React Native (Cross-platform)  
+**Target Users**: Individual consumers and small businesses  
+**Unique Value**: Cultural relevance with advanced security technology  
+
+This comprehensive flowchart demonstrates the complete functionality and architecture of the Shabari cybersecurity application, showcasing its potential for the MSME hackathon submission.

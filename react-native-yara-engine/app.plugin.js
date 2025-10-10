@@ -16,34 +16,54 @@ function withYaraEngine(config) {
         return gradleConfig;
       });
 
-      config = withAppBuildGradle(config, (gradleConfig) => {
-        if (!gradleConfig?.modResults?.contents.includes("react-native-yara-engine")) {
-          gradleConfig.modResults.contents = gradleConfig.modResults.contents.replace(
-            /dependencies \{[\s\S]*?\}/m,
-            (match) => {
-              if (match.includes("react-native-yara-engine")) return match; // already added
-              return match.replace(/dependencies \{/, `dependencies {\n    implementation project(':react-native-yara-engine')`);
+        config = withAppBuildGradle(config, (gradleConfig) => {
+          try {
+            if (!gradleConfig?.modResults?.contents.includes("react-native-yara-engine")) {
+              // Use the pre-built AAR file instead of project reference
+              const aarPath = path.join(__dirname, 'dist', 'react-native-yara-engine-1.0.0.aar');
+              const projectRoot = config.modRequest.projectRoot;
+              const androidRoot = path.join(projectRoot, 'android');
+              const relativePath = path.relative(
+                path.join(androidRoot, 'app'),
+                aarPath
+              ).replace(/\\/g, '/');
+            
+              gradleConfig.modResults.contents = gradleConfig.modResults.contents.replace(
+                /dependencies \{[\s\S]*?\}/m,
+                (match) => {
+                  if (match.includes("react-native-yara-engine")) return match; // already added
+                  return match.replace(/dependencies \{/, `dependencies {\n    implementation(name: 'react-native-yara-engine-1.0.0', ext: 'aar')\n    implementation files('${relativePath}')`);
+                }
+              );
             }
-          );
-        }
-        return gradleConfig;
-      });
+          } catch (error) {
+            console.warn('⚠️ YARA Engine: Error configuring build.gradle:', error.message);
+          }
+          return gradleConfig;
+        });
 
       return withDangerousMod(config, [
         'android',
         async (config) => {
-          const androidManifestPath = path.join(
-            config.modRequest.platformProjectRoot,
-            'app',
-            'src',
-            'main',
-            'AndroidManifest.xml'
-          );
-          
-          // Ensure the YARA engine has necessary permissions
-          // (Already handled by main app permissions)
-          
-          return config;
+          try {
+            const projectRoot = config.modRequest.projectRoot;
+            const androidRoot = path.join(projectRoot, 'android');
+            const androidManifestPath = path.join(
+              androidRoot,
+              'app',
+              'src',
+              'main',
+              'AndroidManifest.xml'
+            );
+            
+            // Ensure the YARA engine has necessary permissions
+            // (Already handled by main app permissions)
+            
+            return config;
+          } catch (error) {
+            console.warn('⚠️ YARA Engine: Error in dangerous mod:', error.message);
+            return config;
+          }
         },
       ]);
     },
@@ -51,9 +71,13 @@ function withYaraEngine(config) {
     // Add YaraPackage to MainApplication
     (config) => {
       return withMainApplication(config, async (config) => {
-        // Try both Java and Kotlin files
+        try {
+          // Try both Java and Kotlin files
+          const projectRoot = config.modRequest.projectRoot;
+          const androidRoot = path.join(projectRoot, 'android');
+        
         const mainApplicationJavaPath = path.join(
-          config.modRequest.platformProjectRoot,
+          androidRoot,
           'app',
           'src',
           'main',
@@ -65,7 +89,7 @@ function withYaraEngine(config) {
         );
         
         const mainApplicationKotlinPath = path.join(
-          config.modRequest.platformProjectRoot,
+          androidRoot,
           'app',
           'src',
           'main',
@@ -104,16 +128,12 @@ function withYaraEngine(config) {
           // Add package to the list if not present
           if (!mainApplicationContent.includes('YaraPackage()')) {
             if (isKotlin) {
-              // Handle Kotlin syntax
-              const getPackagesRegex = /override fun getPackages\(\): List<ReactPackage> \{[\s\S]*?return packages/;
+              // Handle Kotlin syntax - add after PackageList(this).packages
+              const packageListRegex = /val packages = PackageList\(this\)\.packages/;
               mainApplicationContent = mainApplicationContent.replace(
-                getPackagesRegex,
+                packageListRegex,
                 (match) => {
-                  const returnIndex = match.lastIndexOf('return packages');
-                  return match.slice(0, returnIndex) +
-                    '            \n            // Add YARA package for native malware detection\n' +
-                    '            packages.add(YaraPackage())\n            \n            ' + 
-                    match.slice(returnIndex);
+                  return match + '\n            // Add YARA package for native malware detection\n            packages.add(YaraPackage())';
                 }
               );
             } else {
@@ -138,6 +158,10 @@ function withYaraEngine(config) {
         }
         
         return config;
+        } catch (error) {
+          console.warn('⚠️ YARA Engine: Error configuring MainApplication:', error.message);
+          return config;
+        }
       });
     }
   ]);

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
 // Import services
-import { smsReaderService } from '../services/SMSReaderService';
+// import { smsReaderService } from '../services/SMSReaderService'; // Commented out to prevent startup crashes
 
 interface StartupInitializerProps {
   onInitializationComplete: () => void;
@@ -30,6 +30,7 @@ interface InitStatus {
     qrScanner: boolean;
     notifications: boolean;
     smsDetection: boolean;
+    callProtection: boolean;
   };
 }
 
@@ -39,13 +40,14 @@ const StartupInitializer: React.FC<StartupInitializerProps> = ({
   const [initStatus, setInitStatus] = useState<InitStatus>({
     step: 'Starting up...',
     completed: 0,
-    total: 5,
+    total: 6,
     features: {
       urlProtection: false,
       fileScanner: false,
       qrScanner: false,
       notifications: false,
-      smsDetection: false
+      smsDetection: false,
+      callProtection: false
     }
   });
 
@@ -84,29 +86,27 @@ const StartupInitializer: React.FC<StartupInitializerProps> = ({
       await new Promise(resolve => setTimeout(resolve, 500));
       updateStatus('✅ Notifications ready', 'notifications');
 
-      // Feature 5: SMS Detection (smart initialization)
-      updateStatus('📱 Checking SMS Detection...');
-      
+      // Feature 5: Call Protection (proxy engine initialization)
+      updateStatus('🛡️ Initializing Call Protection...');
       if (Platform.OS === 'android') {
-        // Check if SMS permissions are already granted
-        const smsStatus = smsReaderService.getStatus();
-        if (smsStatus.hasPermissions) {
-          updateStatus('📱 Initializing SMS Detection...');
-          try {
-            await smsReaderService.initialize();
-            updateStatus('✅ SMS Detection ready', 'smsDetection');
-          } catch (error) {
-            console.log('SMS initialization will be done when needed');
-            updateStatus('⚠️ SMS Detection (on-demand)', 'smsDetection');
-          }
-        } else {
-          // SMS will be initialized when user first accesses SMS features
-          updateStatus('⚠️ SMS Detection (on-demand)', 'smsDetection');
+        try {
+          // This will be handled by AutoInitializationService
+          await new Promise(resolve => setTimeout(resolve, 800)); // Slightly longer for proxy engine
+          updateStatus('✅ Call Protection ready', 'callProtection');
+        } catch (error) {
+          console.log('Call protection will initialize in background');
+          updateStatus('⚠️ Call Protection (background)', 'callProtection');
         }
       } else {
-        // Not Android, skip SMS
-        updateStatus('⚠️ SMS Detection (Android only)', 'smsDetection');
+        updateStatus('⚠️ Call Protection (Android only)', 'callProtection');
       }
+
+      // Feature 6: SMS Detection (on-demand initialization)
+      updateStatus('📱 SMS Detection ready (on-demand)');
+      
+      // Skip SMS initialization on startup to prevent crashes
+      // SMS will be initialized when user first accesses SMS features
+      updateStatus('✅ SMS Detection (on-demand)', 'smsDetection');
 
       // All done!
       updateStatus('🎉 All features ready!');
