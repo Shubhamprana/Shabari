@@ -39,6 +39,9 @@ jobs:
         echo "EXPO_PUBLIC_STREAMLINED_BUILD=true" >> .env.production
         echo "EXPO_PUBLIC_BUILD_TYPE=github-actions" >> .env.production
         
+    - name: Generate Android project with Expo
+      run: npx expo prebuild --platform android --clean
+      
     - name: Cache Gradle packages
       uses: actions/cache@v3
       with:
