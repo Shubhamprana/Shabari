@@ -20,14 +20,22 @@
       "android": {
         "buildType": "apk",
         "image": "latest",
-        "node": "20.18.0"
+        "node": "20.18.0",
+        "env": {
+          "KOTLIN_VERSION": "1.9.24",
+          "ANDROID_KOTLIN_VERSION": "1.9.24"
+        }
       }
     },
     "preview2": {
       "android": {
         "gradleCommand": ":app:assembleRelease",
         "image": "latest",
-        "node": "20.18.0"
+        "node": "20.18.0",
+        "env": {
+          "KOTLIN_VERSION": "1.9.24",
+          "ANDROID_KOTLIN_VERSION": "1.9.24"
+        }
       }
     },
     "playstore": {
@@ -73,7 +81,9 @@
           "SENTRY_DSN": "https://c94323cf65bd708ab23fd80f73cd198f@o4510115417817088.ingest.de.sentry.io/4510115458449488",
           "GRADLE_OPTS": "-Xmx6g -XX:MaxMetaspaceSize=1g",
           "JAVA_OPTS": "-Xmx6g",
-          "EAS_SKIP_AUTO_FINGERPRINT": "1"
+          "EAS_SKIP_AUTO_FINGERPRINT": "1",
+          "KOTLIN_VERSION": "1.9.24",
+          "ANDROID_KOTLIN_VERSION": "1.9.24"
         }
       }
     },
@@ -91,7 +101,9 @@
           "EXPO_PUBLIC_ENVIRONMENT": "production",
           "GRADLE_OPTS": "-Xmx6g -XX:MaxMetaspaceSize=1g",
           "JAVA_OPTS": "-Xmx6g",
-          "EAS_SKIP_AUTO_FINGERPRINT": "1"
+          "EAS_SKIP_AUTO_FINGERPRINT": "1",
+          "KOTLIN_VERSION": "1.9.24",
+          "ANDROID_KOTLIN_VERSION": "1.9.24"
         }
       }
     }
