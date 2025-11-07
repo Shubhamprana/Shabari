@@ -23,6 +23,8 @@ import { FileWatchdogService } from '../services/FileWatchdogService';
 import PermissionManager from '../services/PermissionManager';
 import { proxyEngineService } from '../services/ProxyEngineService';
 import { YaraSecurityService } from '../services/YaraSecurityService';
+import { LinkScannerService } from '../services/ScannerService';
+
 // Import types - using any for now to avoid type issues
 type DashboardScreenProps = {
   navigation: any;
@@ -33,21 +35,6 @@ type DashboardScreenProps = {
   onNavigateToMessageAnalysis: () => void;
   onNavigateToFeatureManagement?: () => void;
   onNavigateToQuarantine?: () => void;
-};
-
-// Import LinkScannerService - using dynamic import to avoid missing module
-const LinkScannerService = {
-  initializeService: async () => {
-    console.log('LinkScannerService: Mock initialization');
-    return true;
-  },
-  scanUrl: async (url: string) => {
-    console.log('LinkScannerService: Mock scan for', url);
-    return {
-      isSafe: Math.random() > 0.3, // 70% safe
-      details: `Scanned ${url} - ${Math.random() > 0.3 ? 'No threats detected' : 'Potential threat detected'}`
-    };
-  }
 };
 
 const DashboardScreen = ({

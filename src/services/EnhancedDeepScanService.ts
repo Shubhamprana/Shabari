@@ -20,6 +20,7 @@ import DeepScanPermissionAnalyzer, { PermissionRiskAssessment, RiskLevel } from 
 import DeepScanApkAnalyzer, { ApkAnalysis } from './DeepScanApkAnalyzer';
 import DeepScanSocialMediaAnalyzer, { SocialMediaFileInfo } from './DeepScanSocialMediaAnalyzer';
 import DeepScanFolderScanner, { FolderScanResult, AllFoldersScanResult } from './DeepScanFolderScanner';
+import { AppPermissionAnalyzer } from './AppPermissionAnalyzer';
 
 // ==================== TYPES ====================
 
@@ -350,6 +351,7 @@ export class EnhancedDeepScanService {
   private apkAnalyzer: typeof DeepScanApkAnalyzer;
   private socialMediaAnalyzer: typeof DeepScanSocialMediaAnalyzer;
   private folderScanner: typeof DeepScanFolderScanner;
+  private appPermissionAnalyzer: AppPermissionAnalyzer;
   
   private currentScanId: string | null = null;
   private isScanInProgress: boolean = false;
@@ -367,6 +369,7 @@ export class EnhancedDeepScanService {
     this.apkAnalyzer = DeepScanApkAnalyzer;
     this.socialMediaAnalyzer = DeepScanSocialMediaAnalyzer;
     this.folderScanner = DeepScanFolderScanner;
+    this.appPermissionAnalyzer = AppPermissionAnalyzer.getInstance();
   }
 
   /**
@@ -554,7 +557,90 @@ export class EnhancedDeepScanService {
         }
       }
 
-      // Stage 4: Complete
+      // Stage 4: App Permission Scanning
+      if (fullConfig.scanAppPermissions && fullConfig.scanAllApps) {
+        this.updateProgress({
+          stage: 'analyzing_apps',
+          message: 'Analyzing installed app permissions...',
+          percentage: 60,
+          appsScanned: 0,
+          totalApps: 0
+        }, onProgress);
+
+        try {
+          const appScanResult = await this.appPermissionAnalyzer.scanAllApps();
+          
+          this.updateProgress({
+            stage: 'analyzing_apps',
+            message: `Analyzed ${appScanResult.scannedApps} apps...`,
+            percentage: 80,
+            appsScanned: appScanResult.scannedApps,
+            totalApps: appScanResult.totalApps
+          }, onProgress);
+
+          // Convert app scan results to ScannedApp format
+          for (const riskyApp of appScanResult.riskyApps) {
+            appsScanned.push({
+              packageName: riskyApp.packageName,
+              appName: riskyApp.appName,
+              version: '1.0.0', // Version not available in AppPermissionAnalyzer
+              permissions: riskyApp.permissions,
+              riskyPermissions: riskyApp.dangerousPermissions,
+              riskScore: riskyApp.riskScore,
+              isSafe: riskyApp.riskLevel === 'SAFE',
+              scanTime: Date.now()
+            });
+
+            // Add critical and high-risk apps as threats
+            if (riskyApp.riskLevel === 'CRITICAL' || riskyApp.riskLevel === 'HIGH') {
+              riskyApps.push({
+                packageName: riskyApp.packageName,
+                appName: riskyApp.appName,
+                riskReasons: this.generateAppRiskReasons(riskyApp),
+                riskScore: riskyApp.riskScore,
+                recommendedAction: riskyApp.riskLevel === 'CRITICAL' ? 'uninstall' : 'review'
+              });
+
+              // Also add as threat if critical
+              if (riskyApp.riskLevel === 'CRITICAL') {
+                threatsDetected.push({
+                  id: this.generateThreatId(),
+                  type: 'app',
+                  appPackageName: riskyApp.packageName,
+                  fileName: riskyApp.appName,
+                  fileSize: 0,
+                  threatType: 'risky_permissions',
+                  threatName: `Risky app: ${riskyApp.appName}`,
+                  severity: this.mapRiskLevelToSeverity(riskyApp.riskLevel),
+                  details: `App has ${riskyApp.dangerousPermissions.length} dangerous permissions`,
+                  description: `Installed app with ${riskyApp.riskLevel} risk level permissions`,
+                  recommendations: [
+                    `Risk Score: ${riskyApp.riskScore}/100`,
+                    `Has ${riskyApp.dangerousPermissions.length} dangerous permissions`,
+                    riskyApp.riskLevel === 'CRITICAL' 
+                      ? 'Consider uninstalling this app immediately'
+                      : 'Review app permissions carefully'
+                  ],
+                  scanEngine: 'AppPermissionAnalyzer',
+                  detectedAt: new Date(),
+                  confidence: 85,
+                  falsePositiveRisk: 15,
+                  actions: this.generateThreatActions('app')
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error scanning apps:', error);
+          errors.push({
+            type: 'scan_failed',
+            message: `App permission scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            timestamp: new Date()
+          });
+        }
+      }
+
+      // Stage 5: Complete
       this.updateProgress({
         stage: 'complete',
         percentage: 100,
@@ -968,6 +1054,40 @@ export class EnhancedDeepScanService {
     if (this.scanHistory.length > this.maxHistorySize) {
       this.scanHistory = this.scanHistory.slice(-this.maxHistorySize);
     }
+  }
+
+  /**
+   * Generate risk reasons for app
+   */
+  private generateAppRiskReasons(app: {
+    riskLevel: string;
+    dangerousPermissions: string[];
+    permissionCategories: any[];
+  }): string[] {
+    const reasons: string[] = [];
+    
+    if (app.riskLevel === 'CRITICAL') {
+      reasons.push('Has CRITICAL risk level permissions');
+    }
+    
+    if (app.dangerousPermissions.length > 0) {
+      reasons.push(`Has ${app.dangerousPermissions.length} dangerous permission(s)`);
+      // Add first few dangerous permissions
+      app.dangerousPermissions.slice(0, 3).forEach(perm => {
+        reasons.push(`  • ${perm.replace('android.permission.', '')}`);
+      });
+    }
+    
+    if (app.permissionCategories && app.permissionCategories.length > 0) {
+      const criticalCategories = app.permissionCategories.filter((cat: any) => 
+        cat.riskLevel === 'CRITICAL' || cat.riskLevel === 'HIGH'
+      );
+      if (criticalCategories.length > 0) {
+        reasons.push(`Has ${criticalCategories.length} high-risk permission category(ies)`);
+      }
+    }
+    
+    return reasons;
   }
 }
 

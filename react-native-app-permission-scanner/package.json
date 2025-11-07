@@ -1,0 +1,36 @@
+{
+  "name": "react-native-app-permission-scanner",
+  "version": "1.0.0",
+  "description": "Real app permission scanner for React Native - scans installed apps and analyzes their permissions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react-native",
+    "android",
+    "permissions",
+    "security",
+    "app-scanner",
+    "malware-detection"
+  ],
+  "author": "Shabari Security Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react-native": ">=0.60.0"
+  },
+  "react-native": {
+    "android": {
+      "sourceDir": "./android",
+      "packageImportPath": "import com.shabari.appscanner.AppPermissionScannerPackage;"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shabari/react-native-app-permission-scanner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shabari/react-native-app-permission-scanner/issues"
+  },
+  "homepage": "https://github.com/shabari/react-native-app-permission-scanner#readme"
+}

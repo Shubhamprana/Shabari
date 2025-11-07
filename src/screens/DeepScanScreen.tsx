@@ -13,12 +13,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import DeepScanService, {
+import DeepScanActionButtons from '../components/DeepScanActionButtons';
+import DeepScanConfigPanel from '../components/DeepScanConfigPanel';
+import DeepScanProgressCard from '../components/DeepScanProgressCard';
+import DeepScanResultSummary from '../components/DeepScanResultSummary';
+import DeepScanStatisticsCard from '../components/DeepScanStatisticsCard';
+import DeepScanThreatCard from '../components/DeepScanThreatCard';
+import EnhancedDeepScanService, {
   DeepScanConfig,
   DeepScanProgress,
   DeepScanResult,
   DeepScanThreat,
-} from '../services/DeepScanService';
+} from '../services/EnhancedDeepScanService';
+import { ThreatActionType } from '../types/deepScan.types';
 import QuarantineService from '../services/QuarantineService';
 
 // ==============================================================================
@@ -39,6 +46,31 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
   const [scanProgress, setScanProgress] = useState<DeepScanProgress | null>(null);
   const [scanResult, setScanResult] = useState<DeepScanResult | null>(null);
   const [expandedThreat, setExpandedThreat] = useState<string | null>(null);
+  const [showConfig, setShowConfig] = useState(false);
+  const [scanConfig, setScanConfig] = useState<DeepScanConfig>({
+    scanType: 'quick',
+    scanDownloads: true,
+    scanDocuments: false,
+    scanImages: false,
+    scanWhatsApp: false,
+    scanTelegram: false,
+    scanCache: false,
+    scanSystemDirs: false,
+    scanAllFolders: false,
+    scanSocialMediaFolders: false,
+    scanApkFiles: true,
+    scanAppPermissions: true,
+    scanAllApps: false,
+    scanUserApps: true,
+    scanSystemApps: false,
+    recursiveScan: false,
+    maxScanDepth: 2,
+    scanPriority: 'speed',
+    enableYaraEngine: false,
+    enableHeuristicScan: true,
+    skipSystemFiles: true,
+    skipHiddenFiles: false,
+  });
 
   // Animations
   const scannerRotation = useRef(new Animated.Value(0)).current;
@@ -51,7 +83,7 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
     return () => {
       // Cleanup: Cancel scan if user navigates away
       if (isScanning) {
-        DeepScanService.cancelScan();
+        EnhancedDeepScanService.cancelScan();
       }
     };
   }, []);
@@ -97,31 +129,48 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
   // ==============================================================================
 
   const handleStartQuickScan = async () => {
-    const config: Partial<DeepScanConfig> = {
+    const quickConfig: DeepScanConfig = {
+      ...scanConfig,
+      scanType: 'quick',
       scanDownloads: true,
-      scanDocuments: true,
+      scanDocuments: false,
       scanImages: false,
-      scanWhatsApp: true,
-      scanApkFiles: true,
-      enableYaraEngine: true,
+      scanWhatsApp: false,
+      scanTelegram: false,
+      scanCache: false,
+      scanSystemDirs: false,
+      scanAllFolders: false,
+      scanSocialMediaFolders: false,
+      recursiveScan: false,
+      maxScanDepth: 2,
+      scanPriority: 'speed',
       maxFileSize: 50 * 1024 * 1024, // 50MB for quick scan
     };
-
-    await performScan(config, 'Quick Scan');
+    setScanConfig(quickConfig);
+    await performScan(quickConfig, 'Quick Scan');
   };
 
   const handleStartFullScan = async () => {
-    const config: Partial<DeepScanConfig> = {
+    const fullConfig: DeepScanConfig = {
+      ...scanConfig,
+      scanType: 'full',
       scanDownloads: true,
       scanDocuments: true,
       scanImages: true,
       scanWhatsApp: true,
-      scanApkFiles: true,
+      scanTelegram: true,
+      scanCache: true,
+      scanSystemDirs: false,
+      scanAllFolders: true,
+      scanSocialMediaFolders: true,
+      recursiveScan: true,
+      maxScanDepth: 10,
+      scanPriority: 'thorough',
       enableYaraEngine: true,
       maxFileSize: 100 * 1024 * 1024, // 100MB for full scan
     };
-
-    await performScan(config, 'Full Deep Scan');
+    setScanConfig(fullConfig);
+    await performScan(fullConfig, 'Full Deep Scan');
   };
 
   const performScan = async (config: Partial<DeepScanConfig>, scanType: string) => {
@@ -133,7 +182,7 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
       setScanProgress(null);
       setScanResult(null);
 
-      const result = await DeepScanService.performDeepScan(config, (progress) => {
+      const result = await EnhancedDeepScanService.performDeepScan(config, (progress) => {
         setScanProgress(progress);
       });
 
@@ -194,7 +243,7 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
           text: 'Cancel Scan',
           style: 'destructive',
           onPress: () => {
-            DeepScanService.cancelScan();
+            EnhancedDeepScanService.cancelScan();
             setIsScanning(false);
             setScanProgress(null);
           },
@@ -423,6 +472,36 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
     );
   };
 
+  const handleThreatAction = (action: ThreatActionType, threat: DeepScanThreat) => {
+    switch (action) {
+      case 'quarantine':
+        handleQuarantineThreat(threat);
+        break;
+      case 'delete':
+        handleDeleteThreat(threat);
+        break;
+      case 'view_details':
+        setExpandedThreat(expandedThreat === threat.id ? null : threat.id);
+        break;
+      case 'ignore':
+        // Remove threat from results
+        if (scanResult) {
+          const updatedThreats = scanResult.threatsDetected.filter(t => t.id !== threat.id);
+          setScanResult({
+            ...scanResult,
+            threatsDetected: updatedThreats
+          });
+        }
+        break;
+      case 'scan_again':
+        // Re-scan this specific file
+        Alert.alert('Info', 'Re-scan feature coming soon');
+        break;
+      default:
+        console.log('Unknown action:', action);
+    }
+  };
+
   const handleQuarantineThreat = (threat: DeepScanThreat) => {
     Alert.alert(
       '🔒 Quarantine Threat?',
@@ -571,52 +650,12 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
     }
 
     return (
-      <View style={styles.progressContainer}>
-        <Animated.View style={[styles.scannerIcon, { transform: [{ rotate: spin }] }]}>
-          <MaterialCommunityIcons name="shield-search" size={80} color="#00d4ff" />
-        </Animated.View>
-
-        <Text style={styles.progressTitle}>
-          {scanProgress.stage === 'initializing' && '🔄 Initializing...'}
-          {scanProgress.stage === 'permissions' && '🔐 Requesting Permissions...'}
-          {scanProgress.stage === 'scanning' && '🔍 Scanning...'}
-          {scanProgress.stage === 'analyzing' && '📊 Analyzing Results...'}
-          {scanProgress.stage === 'complete' && '✅ Scan Complete!'}
-          {scanProgress.stage === 'error' && '❌ Scan Error'}
-        </Text>
-
-        <Text style={styles.progressMessage}>{scanProgress.message}</Text>
-
-        {scanProgress.stage === 'scanning' && (
-          <>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: `${scanProgress.percentage}%` }]} />
-            </View>
-            <Text style={styles.progressPercentage}>{scanProgress.percentage.toFixed(0)}%</Text>
-
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{scanProgress.filesScanned}</Text>
-                <Text style={styles.statLabel}>Files Scanned</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{scanProgress.threatsFound}</Text>
-                <Text style={styles.statLabel}>Threats Found</Text>
-              </View>
-            </View>
-
-            {scanProgress.currentFile && (
-              <Text style={styles.currentFile} numberOfLines={1}>
-                {scanProgress.currentFile}
-              </Text>
-            )}
-          </>
-        )}
-
-        <TouchableOpacity style={styles.cancelButton} onPress={handleCancelScan}>
-          <Text style={styles.cancelButtonText}>Cancel Scan</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <DeepScanProgressCard
+          progress={scanProgress}
+          onCancel={handleCancelScan}
+        />
+      </ScrollView>
     );
   };
 
@@ -625,49 +664,32 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
       return null;
     }
 
-    const { threatsDetected, totalFilesScanned, scanDuration, isNativeYaraUsed } = scanResult;
-
     return (
-      <ScrollView style={styles.resultsContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.resultHeader}>
-          {threatsDetected.length === 0 ? (
-            <>
-              <MaterialCommunityIcons name="shield-check" size={60} color="#4ade80" />
-              <Text style={styles.resultTitle}>✅ Device is Clean!</Text>
-              <Text style={styles.resultSubtitle}>
-                No threats detected in {totalFilesScanned} files
-              </Text>
-            </>
-          ) : (
-            <>
-              <MaterialCommunityIcons name="shield-alert" size={60} color="#f87171" />
-              <Text style={styles.resultTitle}>⚠️ Threats Detected!</Text>
-              <Text style={styles.resultSubtitle}>
-                Found {threatsDetected.length} threat(s) in {totalFilesScanned} files
-              </Text>
-            </>
-          )}
-        </View>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Result Summary */}
+        <DeepScanResultSummary
+          result={scanResult}
+          onViewThreat={(threat) => setExpandedThreat(expandedThreat === threat.id ? null : threat.id)}
+          onExport={() => {
+            Alert.alert('Export', 'Export feature coming soon');
+          }}
+        />
 
-        <View style={styles.scanStats}>
-          <View style={styles.scanStatItem}>
-            <Text style={styles.scanStatLabel}>Scan Duration</Text>
-            <Text style={styles.scanStatValue}>{(scanDuration / 1000).toFixed(2)}s</Text>
-          </View>
-          <View style={styles.scanStatItem}>
-            <Text style={styles.scanStatLabel}>Files Scanned</Text>
-            <Text style={styles.scanStatValue}>{totalFilesScanned}</Text>
-          </View>
-          <View style={styles.scanStatItem}>
-            <Text style={styles.scanStatLabel}>Scan Engine</Text>
-            <Text style={styles.scanStatValue}>{isNativeYaraUsed ? 'Native' : 'Mock'}</Text>
-          </View>
-        </View>
+        {/* Statistics Card */}
+        <DeepScanStatisticsCard result={scanResult} />
 
-        {threatsDetected.length > 0 && (
+        {/* Threats List */}
+        {scanResult.threatsDetected.length > 0 && (
           <View style={styles.threatsSection}>
-            <Text style={styles.threatsTitle}>Detected Threats:</Text>
-            {threatsDetected.map((threat) => renderThreatCard(threat))}
+            <Text style={styles.threatsTitle}>Detected Threats</Text>
+            {scanResult.threatsDetected.map((threat) => (
+              <DeepScanThreatCard
+                key={threat.id}
+                threat={threat}
+                onAction={handleThreatAction}
+                expanded={expandedThreat === threat.id}
+              />
+            ))}
             
             {/* Bulk Actions */}
             <View style={styles.bulkActionsContainer}>
@@ -693,121 +715,22 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
           </View>
         )}
 
+        {/* New Scan Button */}
         <TouchableOpacity
           style={styles.newScanButton}
           onPress={() => {
             setScanResult(null);
             setScanProgress(null);
+            setExpandedThreat(null);
           }}
         >
+          <MaterialCommunityIcons name="refresh" size={20} color="#fff" />
           <Text style={styles.newScanButtonText}>Start New Scan</Text>
         </TouchableOpacity>
       </ScrollView>
     );
   };
 
-  const renderThreatCard = (threat: DeepScanThreat) => {
-    const isExpanded = expandedThreat === threat.id;
-
-    const getSeverityColor = (severity: string) => {
-      switch (severity) {
-        case 'critical':
-          return '#dc2626';
-        case 'high':
-          return '#f87171';
-        case 'medium':
-          return '#fb923c';
-        case 'low':
-          return '#fbbf24';
-        default:
-          return '#6b7280';
-      }
-    };
-
-    const getThreatIcon = (type: string) => {
-      switch (type) {
-        case 'malware':
-          return 'virus';
-        case 'suspicious_apk':
-          return 'package-variant-closed';
-        case 'corrupted_file':
-          return 'file-alert';
-        case 'dangerous_file':
-          return 'file-remove';
-        default:
-          return 'alert-circle';
-      }
-    };
-
-    return (
-      <View key={threat.id} style={styles.threatCard}>
-        <TouchableOpacity
-          onPress={() => setExpandedThreat(isExpanded ? null : threat.id)}
-          activeOpacity={0.8}
-        >
-          <View style={styles.threatHeader}>
-            <MaterialCommunityIcons
-              name={getThreatIcon(threat.threatType) as any}
-              size={28}
-              color={getSeverityColor(threat.severity)}
-            />
-            <View style={styles.threatInfo}>
-              <Text style={styles.threatName}>{threat.threatName}</Text>
-              <Text style={styles.threatFileName} numberOfLines={1}>
-                {threat.fileName}
-              </Text>
-            </View>
-            <View style={[styles.severityBadge, { backgroundColor: getSeverityColor(threat.severity) }]}>
-              <Text style={styles.severityText}>{threat.severity.toUpperCase()}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {isExpanded && (
-          <View style={styles.threatDetails}>
-            <Text style={styles.threatDetailsText}>
-              <Text style={styles.threatDetailsLabel}>Type: </Text>
-              {threat.threatType.replace('_', ' ')}
-            </Text>
-            <Text style={styles.threatDetailsText}>
-              <Text style={styles.threatDetailsLabel}>Size: </Text>
-              {(threat.fileSize / 1024).toFixed(2)} KB
-            </Text>
-            <Text style={styles.threatDetailsText}>
-              <Text style={styles.threatDetailsLabel}>Engine: </Text>
-              {threat.scanEngine}
-            </Text>
-            <Text style={styles.threatDetailsText}>
-              <Text style={styles.threatDetailsLabel}>Details: </Text>
-              {threat.details}
-            </Text>
-            <Text style={styles.threatDetailsText}>
-              <Text style={styles.threatDetailsLabel}>Path: </Text>
-              {threat.filePath}
-            </Text>
-
-            <View style={styles.threatActions}>
-              <TouchableOpacity
-                style={[styles.threatActionButton, styles.quarantineButton]}
-                onPress={() => handleQuarantineThreat(threat)}
-              >
-                <MaterialCommunityIcons name="shield-lock" size={20} color="#fff" />
-                <Text style={styles.threatActionText}>Quarantine</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.threatActionButton, styles.deleteButton]}
-                onPress={() => handleDeleteThreat(threat)}
-              >
-                <MaterialCommunityIcons name="delete" size={20} color="#fff" />
-                <Text style={styles.threatActionText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </View>
-    );
-  };
 
   // ==============================================================================
   // MAIN RENDER
@@ -830,9 +753,32 @@ const DeepScanScreen: React.FC<DeepScanScreenProps> = ({ onGoBack, onNavigateToQ
           <View style={styles.headerPlaceholder} />
         </View>
 
-        {renderScanOptions()}
-        {renderScanProgress()}
-        {renderScanResults()}
+        {showConfig ? (
+          <DeepScanConfigPanel
+            config={scanConfig}
+            onChange={setScanConfig}
+          />
+        ) : (
+          <>
+            {renderScanOptions()}
+            {renderScanProgress()}
+            {renderScanResults()}
+          </>
+        )}
+        
+        {/* Config Toggle Button */}
+        {!isScanning && !scanResult && (
+          <TouchableOpacity
+            style={styles.configButton}
+            onPress={() => setShowConfig(!showConfig)}
+          >
+            <MaterialCommunityIcons
+              name={showConfig ? 'close' : 'cog'}
+              size={24}
+              color="#fff"
+            />
+          </TouchableOpacity>
+        )}
       </LinearGradient>
     </View>
   );
@@ -1054,7 +1000,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#00d4ff',
   },
+  scrollView: {
+    flex: 1,
+  },
   threatsSection: {
+    marginHorizontal: 16,
     marginBottom: 20,
   },
   threatsTitle: {
@@ -1062,6 +1012,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 16,
+    marginLeft: 16,
+  },
+  configButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#3b82f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   threatCard: {
     backgroundColor: 'rgba(15, 23, 42, 0.8)',

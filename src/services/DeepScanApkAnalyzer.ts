@@ -9,7 +9,8 @@
  */
 
 import * as FileSystem from 'expo-file-system';
-import DeepScanPermissionAnalyzer, { RiskLevel, PermissionRiskAssessment } from './DeepScanPermissionAnalyzer';
+import { NativeModules, Platform } from 'react-native';
+import DeepScanPermissionAnalyzer, { PermissionRiskAssessment, RiskLevel } from './DeepScanPermissionAnalyzer';
 
 // ==================== TYPES ====================
 
@@ -128,9 +129,15 @@ const APK_SUSPICIOUS_INDICATORS = {
 export class DeepScanApkAnalyzer {
   private static instance: DeepScanApkAnalyzer;
   private permissionAnalyzer: typeof DeepScanPermissionAnalyzer;
+  private nativeModule: any;
 
   private constructor() {
     this.permissionAnalyzer = DeepScanPermissionAnalyzer;
+    // Try to get native module for APK parsing
+    if (Platform.OS === 'android') {
+      const { AppPermissionScanner } = NativeModules;
+      this.nativeModule = AppPermissionScanner;
+    }
   }
 
   /**
@@ -145,6 +152,9 @@ export class DeepScanApkAnalyzer {
 
   /**
    * Analyze APK file comprehensively
+   * 
+   * ⚠️ LIMITATION: APK permission extraction is currently placeholder.
+   * Without real manifest extraction, permission analysis will be incomplete.
    */
   public async analyzeApk(apkPath: string): Promise<ApkAnalysis> {
     try {
@@ -156,18 +166,29 @@ export class DeepScanApkAnalyzer {
       const apkName = apkPath.split('/').pop() || 'unknown.apk';
       const apkSize = fileInfo.size || 0;
 
-      // Extract manifest (this is a simplified version - in production, you'd use aapt2 or similar)
+      // Extract manifest (⚠️ Currently returns placeholder data)
       const manifest = await this.extractManifest(apkPath);
       const metadata = await this.extractMetadata(apkPath);
 
-      // Analyze permissions
+      // ⚠️ WARNING: If permissions array is empty, risk assessment will be minimal
+      const hasRealPermissions = manifest.permissions.length > 0;
+      if (!hasRealPermissions) {
+        console.warn(`⚠️ APK ${apkName}: No permissions extracted - using file-based risk assessment only`);
+      }
+
+      // Analyze permissions (will be minimal if permissions array is empty)
       const riskAssessment = await this.permissionAnalyzer.analyzePermissions(manifest.permissions);
 
-      // Check for suspicious characteristics
+      // Check for suspicious characteristics (file-based heuristics)
       const { isSuspicious, suspiciousReasons } = this.checkSuspiciousCharacteristics(
         manifest,
         metadata
       );
+
+      // Add warning if no real permissions extracted
+      if (!hasRealPermissions) {
+        suspiciousReasons.push('⚠️ WARNING: APK manifest extraction not implemented - permissions not analyzed');
+      }
 
       return {
         apkPath,
@@ -178,7 +199,7 @@ export class DeepScanApkAnalyzer {
         versionCode: manifest.versionCode,
         minSdkVersion: metadata.minSdkVersion,
         targetSdkVersion: metadata.targetSdkVersion,
-        permissions: manifest.permissions,
+        permissions: manifest.permissions, // ⚠️ May be empty
         activities: manifest.activities,
         services: manifest.services,
         receivers: manifest.receivers,
@@ -189,7 +210,7 @@ export class DeepScanApkAnalyzer {
         analysisTimestamp: new Date()
       };
     } catch (error) {
-      console.error('Error analyzing APK:', error);
+      console.error('❌ Error analyzing APK:', error);
       throw error;
     }
   }
@@ -210,25 +231,99 @@ export class DeepScanApkAnalyzer {
   /**
    * Extract AndroidManifest.xml from APK
    * 
-   * Note: This is a simplified implementation. In production, you would:
-   * 1. Use aapt2 (Android Asset Packaging Tool) to extract manifest
-   * 2. Parse the binary XML format
-   * 3. Or use a native module to handle APK parsing
+   * This method attempts to use the native Android module (AppPermissionScanner)
+   * to extract APK manifest using PackageManager.getPackageArchiveInfo().
+   * 
+   * ⚠️ LIMITATIONS:
+   * - PackageManager.getPackageArchiveInfo() may not work for all APK files
+   * - Some APKs may require aapt2 for complete extraction
+   * - Binary XML parsing is complex and may need additional native support
+   * 
+   * For production use with comprehensive extraction, consider:
+   * - Using aapt2 (Android Asset Packaging Tool) via native code
+   * - Using apktool for full manifest parsing
+   * - Server-side processing for complex APKs
+   * 
+   * @param apkPath - Path to APK file
+   * @returns ApkManifest with extracted or placeholder data
    */
   public async extractManifest(apkPath: string): Promise<ApkManifest> {
     try {
-      // In a real implementation, you would:
-      // 1. Unzip the APK file
-      // 2. Extract AndroidManifest.xml
-      // 3. Parse the binary XML
-      // 4. Extract all components and permissions
-
-      // For now, we'll return a placeholder structure
-      // In production, integrate with native Android code or aapt2
-      
       const apkName = apkPath.split('/').pop() || 'unknown.apk';
       
-      // Placeholder - would be replaced with actual manifest parsing
+      // Try to get basic file info
+      const fileInfo = await FileSystem.getInfoAsync(apkPath);
+      if (!fileInfo.exists) {
+        throw new Error(`APK file not found: ${apkPath}`);
+      }
+
+      // Try native module extraction first
+      if (this.nativeModule && Platform.OS === 'android') {
+        try {
+          console.log('📦 Attempting native APK manifest extraction...');
+          const nativeResult = await this.nativeModule.extractApkManifest(apkPath);
+          
+          if (nativeResult && nativeResult.extractionSuccessful) {
+            console.log('✅ Native APK manifest extraction successful');
+            console.log(`   Package: ${nativeResult.packageName}`);
+            console.log(`   Permissions: ${nativeResult.permissions?.length || 0}`);
+            
+            return {
+              packageName: nativeResult.packageName || this.guessPackageName(apkName),
+              versionName: nativeResult.versionName || '1.0.0',
+              versionCode: nativeResult.versionCode || 1,
+              permissions: nativeResult.permissions || [],
+              activities: nativeResult.activities || [],
+              services: nativeResult.services || [],
+              receivers: nativeResult.receivers || [],
+              providers: nativeResult.providers || [],
+              usesFeatures: [],
+              metadata: {
+                extractionMethod: 'native',
+                apkPath: apkPath,
+                apkName: apkName,
+                fileSize: String(nativeResult.fileSize || (fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 0) || 0)
+              }
+            };
+          } else {
+            console.warn('⚠️ Native extraction returned unsuccessful result, using fallback');
+          }
+        } catch (nativeError) {
+          console.warn('⚠️ Native APK extraction failed, using fallback:', nativeError);
+        }
+      } else {
+        console.warn('⚠️ Native module not available, using fallback extraction');
+      }
+
+      // Fallback: Return placeholder data
+      console.warn('⚠️ APK Manifest Extraction: Using FALLBACK implementation');
+      console.warn('⚠️ Permissions may be incomplete - consider using aapt2 for full extraction');
+      
+      const manifest: ApkManifest = {
+        packageName: this.guessPackageName(apkName),
+        versionName: '1.0.0',
+        versionCode: 1,
+        permissions: [], // Empty - no extraction available
+        activities: [],
+        services: [],
+        receivers: [],
+        providers: [],
+        usesFeatures: [],
+        metadata: {
+          warning: 'APK manifest extraction failed or not available. Using fallback data.',
+          extractionMethod: 'fallback',
+          apkPath: apkPath,
+          apkName: apkName,
+          fileSize: String((fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 0) || 0),
+          note: 'For complete extraction, use aapt2 or native module with PackageManager.getPackageArchiveInfo()'
+        }
+      };
+
+      return manifest;
+    } catch (error) {
+      console.error('❌ Error extracting APK manifest:', error);
+      // Return minimal placeholder on error
+      const apkName = apkPath.split('/').pop() || 'unknown.apk';
       return {
         packageName: this.guessPackageName(apkName),
         versionName: '1.0.0',
@@ -239,11 +334,12 @@ export class DeepScanApkAnalyzer {
         receivers: [],
         providers: [],
         usesFeatures: [],
-        metadata: {}
+        metadata: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          extractionFailed: 'true',
+          extractionMethod: 'error'
+        }
       };
-    } catch (error) {
-      console.error('Error extracting manifest:', error);
-      throw error;
     }
   }
 
@@ -293,9 +389,9 @@ export class DeepScanApkAnalyzer {
           apkFiles.push({
             path: filePath,
             name: file,
-            size: fileInfo.size || 0,
+            size: (fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 0) || 0,
             directory: folderPath,
-            lastModified: new Date(fileInfo.modificationTime || Date.now())
+            lastModified: new Date((fileInfo.exists && 'modificationTime' in fileInfo ? fileInfo.modificationTime : Date.now()) || Date.now())
           });
         }
       }
