@@ -135,8 +135,18 @@ export class DeepScanApkAnalyzer {
     this.permissionAnalyzer = DeepScanPermissionAnalyzer;
     // Try to get native module for APK parsing
     if (Platform.OS === 'android') {
-      const { AppPermissionScanner } = NativeModules;
-      this.nativeModule = AppPermissionScanner;
+      try {
+        const { AppPermissionScanner } = NativeModules;
+        this.nativeModule = AppPermissionScanner;
+        if (this.nativeModule) {
+          console.log('✅ AppPermissionScanner native module loaded successfully');
+        } else {
+          console.warn('⚠️ AppPermissionScanner native module not found - APK manifest extraction will use fallback');
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to load AppPermissionScanner native module:', error);
+        this.nativeModule = null;
+      }
     }
   }
 

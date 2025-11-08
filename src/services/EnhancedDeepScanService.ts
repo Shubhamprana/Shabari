@@ -15,12 +15,12 @@
 
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
-import { YaraSecurityService } from './YaraSecurityService';
-import DeepScanPermissionAnalyzer, { PermissionRiskAssessment, RiskLevel } from './DeepScanPermissionAnalyzer';
-import DeepScanApkAnalyzer, { ApkAnalysis } from './DeepScanApkAnalyzer';
-import DeepScanSocialMediaAnalyzer, { SocialMediaFileInfo } from './DeepScanSocialMediaAnalyzer';
-import DeepScanFolderScanner, { FolderScanResult, AllFoldersScanResult } from './DeepScanFolderScanner';
 import { AppPermissionAnalyzer } from './AppPermissionAnalyzer';
+import DeepScanApkAnalyzer from './DeepScanApkAnalyzer';
+import DeepScanFolderScanner, { AllFoldersScanResult } from './DeepScanFolderScanner';
+import DeepScanPermissionAnalyzer, { RiskLevel } from './DeepScanPermissionAnalyzer';
+import DeepScanSocialMediaAnalyzer, { SocialMediaFileInfo } from './DeepScanSocialMediaAnalyzer';
+import { YaraSecurityService } from './YaraSecurityService';
 
 // ==================== TYPES ====================
 
