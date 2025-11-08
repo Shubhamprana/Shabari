@@ -1,0 +1,17 @@
+  compare-deep-scan-feature[m
+  main[m
+* [32mreview-deep-scan-feature[m
+  test[m
+  [31mremotes/origin/HEAD[m -> origin/main
+  [31mremotes/origin/main[m
+  [31mremotes/origin/master[m
+  [31mremotes/origin/snyk-fix-ee662f67a82c2272bd213acf4a143865[m
+  [31mremotes/origin/test[m
+  [31mremotes/shubhampraja2/main[m
+  [31mremotes/shubhamprana/HEAD[m -> shubhamprana/master
+  [31mremotes/shubhamprana/feature/enhanced-deep-scan-and-link-checker-fix[m
+  [31mremotes/shubhamprana/main[m
+  [31mremotes/shubhamprana/master[m
+  [31mremotes/shubhamprana/snyk-fix-1e33166a24ef101e2623188466660245[m
+  [31mremotes/shubhamprana/snyk-upgrade-4846ea7719cf6c8656686cd9268f5881[m
+  [31mremotes/shubhamprana/snyk-upgrade-620b8d59209e2c5730d265e2ee92026c[m

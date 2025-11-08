@@ -15,22 +15,8 @@ import {
 } from 'react-native';
 import { NativeFileScanner } from '../services/NativeFileScanner';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
-// Mock LinkScannerService since the module doesn't exist
-const LinkScannerService = {
-  initializeService: async () => {
-    console.log('LinkScannerService: Mock initialization');
-    return true;
-  },
-  scanUrl: async (url: string) => {
-    console.log('LinkScannerService: Mock scan for', url);
-    // Simulate scanning with random results
-    await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
-    return {
-      isSafe: Math.random() > 0.3, // 70% chance of being safe
-      details: `Scanned ${url} - ${Math.random() > 0.3 ? 'No threats detected' : 'Potential threat detected'}`
-    };
-  }
-};
+// Import LinkScannerService from ScannerService
+import { LinkScannerService } from '../services/ScannerService';
 // Import types - using any for now to avoid type issues
 type DashboardScreenProps = {
   navigation: any;

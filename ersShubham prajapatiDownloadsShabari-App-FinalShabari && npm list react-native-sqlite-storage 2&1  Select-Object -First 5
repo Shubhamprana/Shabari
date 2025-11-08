@@ -1,0 +1,41 @@
+ DEEP_SCAN_FIXES_COMPLETE.md                        |  429 [31m------[m
+ DEEP_SCAN_README.md                                |  524 [32m+++++++[m
+ ENHANCED_DEEP_SCAN_SUMMARY.md                      |  111 [32m++[m
+ IMPLEMENTATION_PLAN.md                             |  185 [32m+++[m
+ LICENSE                                            |   21 [31m-[m
+ LINK_CHECKER_CHANGES_SUMMARY.txt                   |   72 [32m+[m
+ LINK_CHECKER_FIX.md                                |  310 [32m++++[m
+ LINK_CHECKER_VERIFICATION.md                       |  362 [32m+++++[m
+ QUARANTINE_FIXES_SUMMARY.md                        |  307 [31m----[m
+ QUARANTINE_SECURITY_FIXES.md                       |  409 [31m------[m
+ QUICK_START_QUARANTINE.md                          |    0
+ README.md                                          |  324 [32m+++[m[31m--[m
+ README_QUARANTINE_COMPLETE.md                      |  200 [31m---[m
+ YARA_ENGINE_SECURITY_AUDIT.md                      |  613 [31m--------[m
+ YARA_ENGINE_SECURITY_FIXES.md                      |  708 [31m---------[m
+ YARA_SECURITY_FIXES_APPLIED.md                     |  434 [31m------[m
+ YARA_SECURITY_QUICK_REFERENCE.md                   |    0
+ package-lock.json                                  |   13 [31m-[m
+ package.json                                       |    1 [31m-[m
+ .../android/src/main/cpp/yara-engine.cpp           |  164 [32m+[m[31m--[m
+ .../android/src/main/cpp/yara-implementation.cpp   |  140 [32m+[m[31m-[m
+ .../src/main/java/com/shabari/yara/YaraEngine.java |  135 [32m+[m[31m-[m
+ .../src/main/java/com/shabari/yara/YaraModule.java |   94 [32m+[m[31m-[m
+ .../main/java/com/shabari/yara/YaraScanResult.java |   53 [32m+[m[31m-[m
+ .../yara-rules/android-malware.yar                 |  338 [31m-----[m
+ setup-quarantine.js                                |  351 [31m-----[m
+ src/screens/DashboardScreen_Backup.tsx             |    2 [32m+[m[31m-[m
+ src/screens/DeepScanScreen.tsx                     |    4 [32m+[m[31m-[m
+ src/screens/SecureQuarantineScreen.tsx             |  707 [31m---------[m
+ src/services/DeepScanApkAnalyzer.ts                |  573 [32m++++++++[m
+ src/services/DeepScanFolderScanner.ts              |  769 [32m++++++++++[m
+ src/services/DeepScanPermissionAnalyzer.ts         |  923 [32m++++++++++++[m
+ src/services/DeepScanSocialMediaAnalyzer.ts        |  515 [32m+++++++[m
+ src/services/EnhancedDeepScanService.ts            | 1528 [32m++++++++++[m[31m----------[m
+ src/services/ScannerService.ts                     |  120 [32m+[m[31m-[m
+ src/services/SecureQuarantineService.ts            |  483 [31m-------[m
+ src/stores/deepScanStore.ts                        |  347 [32m+++++[m
+ src/types/deepScan.types.ts                        |  745 [32m++++++++++[m
+ test-quarantine-security.js                        |  197 [31m---[m
+ test_link_checker.ts                               |  190 [32m+++[m
+ 40 files changed, 6736 insertions(+), 6665 deletions(-)

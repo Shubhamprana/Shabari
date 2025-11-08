@@ -445,11 +445,21 @@ export class LinkScannerService {
         const virusTotalResult = await this.checkVirusTotal(url);
         
         // e. Await the analysis result and parse response
-        if (virusTotalResult.maliciousCount > 0) {
+        // Use a threshold: consider malicious if 3+ engines detect it (reduces false positives)
+        const MALICIOUS_THRESHOLD = 3;
+        
+        if (virusTotalResult.maliciousCount >= MALICIOUS_THRESHOLD) {
           console.log(`🚫 URL flagged by VirusTotal: ${virusTotalResult.maliciousCount} detections`);
           return {
             isSafe: false,
-            details: 'Identified as a threat by global security engines.'
+            details: `Identified as a threat by ${virusTotalResult.maliciousCount} security engines.`
+          };
+        } else if (virusTotalResult.maliciousCount > 0 && virusTotalResult.maliciousCount < MALICIOUS_THRESHOLD) {
+          // Low detection count - likely false positive, but warn user
+          console.log(`⚠️ URL has low detection count: ${virusTotalResult.maliciousCount} engines`);
+          return {
+            isSafe: true,
+            details: `Scanned and found mostly safe (${virusTotalResult.maliciousCount} minor detections).`
           };
         } else {
           console.log(`✅ URL verified as safe: ${hostname}`);
@@ -463,7 +473,7 @@ export class LinkScannerService {
         console.error('⚠️ VirusTotal API error:', apiError);
         return {
           isSafe: true,
-          details: 'Scan service could not be reached.'
+          details: 'Scan service temporarily unavailable. Proceed with caution.'
         };
       }
     } catch (error) {
@@ -492,44 +502,84 @@ export class LinkScannerService {
 
   private static async checkVirusTotal(url: string): Promise<{ maliciousCount: number }> {
     try {
-      // Submit URL for analysis
-      const submitResponse = await axios.post(
-        'https://www.virustotal.com/vtapi/v2/url/scan',
-        new URLSearchParams({
-          apikey: VIRUSTOTAL_API_KEY,
-          url: url
-        }),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          timeout: 10000
-        }
-      );
-
-      // Get the scan report
-      const reportResponse = await axios.post(
-        'https://www.virustotal.com/vtapi/v2/url/report',
-        new URLSearchParams({
-          apikey: VIRUSTOTAL_API_KEY,
-          resource: url
-        }),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          timeout: 10000
-        }
-      );
-
-      const reportData = reportResponse.data;
+      console.log(`🔍 VirusTotal: Checking URL: ${url}`);
       
-      if (reportData.response_code === 1) {
-        return { maliciousCount: reportData.positives || 0 };
+      // First, try to get existing report (V3 API)
+      const urlId = Buffer.from(url).toString('base64').replace(/=/g, '');
+      
+      try {
+        const reportResponse = await axios.get(
+          `https://www.virustotal.com/api/v3/urls/${urlId}`,
+          {
+            headers: {
+              'x-apikey': VIRUSTOTAL_API_KEY,
+            },
+            timeout: 15000
+          }
+        );
+
+        if (reportResponse.data && reportResponse.data.data) {
+          const stats = reportResponse.data.data.attributes.last_analysis_stats;
+          const maliciousCount = stats.malicious || 0;
+          const totalEngines = stats.malicious + stats.suspicious + stats.undetected + stats.harmless;
+          
+          console.log(`✅ VirusTotal: Report found - ${maliciousCount}/${totalEngines} engines flagged as malicious`);
+          return { maliciousCount };
+        }
+      } catch (reportError: any) {
+        // If 404, URL not in database yet, need to submit
+        if (reportError.response?.status === 404) {
+          console.log(`📤 VirusTotal: URL not in database, submitting for analysis...`);
+          
+          // Submit URL for scanning (V3 API)
+          const submitResponse = await axios.post(
+            'https://www.virustotal.com/api/v3/urls',
+            new URLSearchParams({ url: url }),
+            {
+              headers: {
+                'x-apikey': VIRUSTOTAL_API_KEY,
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              timeout: 15000
+            }
+          );
+
+          // Wait a bit for analysis to start (VirusTotal needs time)
+          await new Promise(resolve => setTimeout(resolve, 3000));
+
+          // Try to get the report again
+          try {
+            const newReportResponse = await axios.get(
+              `https://www.virustotal.com/api/v3/urls/${urlId}`,
+              {
+                headers: {
+                  'x-apikey': VIRUSTOTAL_API_KEY,
+                },
+                timeout: 15000
+              }
+            );
+
+            if (newReportResponse.data && newReportResponse.data.data) {
+              const stats = newReportResponse.data.data.attributes.last_analysis_stats;
+              const maliciousCount = stats.malicious || 0;
+              const totalEngines = stats.malicious + stats.suspicious + stats.undetected + stats.harmless;
+              
+              console.log(`✅ VirusTotal: New scan result - ${maliciousCount}/${totalEngines} engines flagged as malicious`);
+              return { maliciousCount };
+            }
+          } catch (newReportError) {
+            console.log(`⚠️ VirusTotal: Analysis still in progress, defaulting to safe`);
+            // Analysis still in progress, return 0 (safe) for now
+            return { maliciousCount: 0 };
+          }
+        } else {
+          throw reportError;
+        }
       }
       
       return { maliciousCount: 0 };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ VirusTotal API error:', error.message);
       throw error; // Re-throw to be handled by the calling function
     }
   }

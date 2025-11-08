@@ -380,6 +380,14 @@ const App: React.FC = () => {
     setupURLHandling();
   }, []);
 
+  // Initialize services when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isInitializing) {
+      console.log('🚀 App: Initializing services...');
+      initializeServices();
+    }
+  }, [isAuthenticated, isInitializing]);
+
   const initializeServices = async (): Promise<void> => {
     try {
       Sentry.addBreadcrumb({ message: 'Starting service initialization' });
